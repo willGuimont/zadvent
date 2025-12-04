@@ -85,7 +85,7 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             });
-            runner_mod.addImport(b.fmt("day_{d}", .{day}), day_mod);
+            runner_mod.addImport(b.fmt("day{d}", .{day}), day_mod);
 
             const day_test = b.addTest(.{
                 .name = b.fmt("day-{d}-test", .{day}),
@@ -98,15 +98,89 @@ pub fn build(b: *std.Build) void {
 }
 
 // removed tryOrFail helper; errors handled inline
-
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
-    // Minimal placeholder runner source. Replace with generator later.
     _ = year;
-    _ = days;
     _ = use_timer;
     _ = use_color;
     _ = part_opt;
-    return "pub fn main() anyerror!void { return; }";
+
+    const allocator = std.heap.page_allocator;
+    const cap: usize = 65536;
+    var buf = allocator.alloc(u8, cap) catch unreachable;
+    var pos: usize = 0;
+
+    // helper: append a slice to buf
+    inline for (0..0) |_| {}
+
+    {
+        const s = "const std = @import(\"std\");\n\n";
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+    {
+        const s = "pub fn main() anyerror!void {\n\n";
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+
+    var tmp: [256]u8 = undefined;
+    for (days) |d| {
+        const import_line = std.fmt.bufPrint(&tmp, "    const day{d} = @import(\"day{d}\");\n", .{ d, d }) catch unreachable;
+        {
+            const s = import_line;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+        const run_header = std.fmt.bufPrint(&tmp, "    // Day {d}\n", .{d}) catch unreachable;
+        {
+            const s = run_header;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+
+        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const res = try day{d}.part1(\"\");\n        std.debug.print(\"[{d}/1] {{any}}\\n\", .{{res}});\n    }}\n", .{ d, d, d }) catch unreachable;
+        {
+            const s = p1;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+
+        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const res = try day{d}.part2(\"\");\n        std.debug.print(\"[{d}/2] {{any}}\\n\", .{{res}});\n    }}\n\n", .{ d, d, d }) catch unreachable;
+        {
+            const s = p2;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+    }
+
+    {
+        const s = "    return;\n}\n";
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+
+    return buf[0..pos];
 }
 
 // Parse a compact integer range string into an allocator-allocated slice of integers.

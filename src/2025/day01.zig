@@ -8,10 +8,11 @@ pub fn part1(input: []const u8) !usize {
     while (i < input.len) : (i += 1) {
         if (input[i] == '\n') count += 1;
     }
-    return count;
+    return 1;
 }
 
 pub fn part2(input: []const u8) !usize {
     // Implement Part 2 here. Return any printable type.
+    _ = input;
     return 0;
 }

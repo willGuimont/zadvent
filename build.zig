@@ -78,7 +78,7 @@ pub fn build(b: *std.Build) void {
             return;
         };
         for (parsed) |day| {
-            if (day > 99) break; // sane guard
+            if (day > 25) break; // sane guard
             const day_path = b.path(b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day }));
             const day_mod = b.createModule(.{
                 .root_source_file = day_path,
@@ -97,9 +97,7 @@ pub fn build(b: *std.Build) void {
     }
 }
 
-// removed tryOrFail helper; errors handled inline
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
-    _ = year;
     _ = use_timer;
     _ = use_color;
     _ = part_opt;
@@ -129,7 +127,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
         }
     }
 
-    var tmp: [256]u8 = undefined;
+    var tmp: [1024]u8 = undefined;
     for (days) |d| {
         const import_line = std.fmt.bufPrint(&tmp, "    const day{d} = @import(\"day{d}\");\n", .{ d, d }) catch unreachable;
         {
@@ -150,7 +148,27 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const res = try day{d}.part1(\"\");\n        std.debug.print(\"[{d}/1] {{any}}\\n\", .{{res}});\n    }}\n", .{ d, d, d }) catch unreachable;
+        const paths = std.fmt.bufPrint(&tmp, "    const example_path = \"input/{s}/day{d:0>2}_example.txt\";\n    const real_path = \"input/{s}/day{d:0>2}.txt\";\n", .{ year, d, year, d }) catch unreachable;
+        {
+            const s = paths;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+
+        const read_inputs = std.fmt.bufPrint(&tmp, "    const example = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, example_path, 8192);\n    defer std.heap.page_allocator.free(example);\n    const real = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, real_path, 65536);\n    defer std.heap.page_allocator.free(real);\n", .{}) catch unreachable;
+        {
+            const s = read_inputs;
+            var i: usize = 0;
+            while (i < s.len) : (i += 1) {
+                buf[pos] = s[i];
+                pos += 1;
+            }
+        }
+
+        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const res_ex = try day{d}.part1(example);\n        std.debug.print(\"[{d}/1 example] {{any}}\\n\", .{{res_ex}});\n        const res = try day{d}.part1(real);\n        std.debug.print(\"[{d}/1] {{any}}\\n\", .{{res}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p1;
             var i: usize = 0;
@@ -160,7 +178,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const res = try day{d}.part2(\"\");\n        std.debug.print(\"[{d}/2] {{any}}\\n\", .{{res}});\n    }}\n\n", .{ d, d, d }) catch unreachable;
+        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const res_ex = try day{d}.part2(example);\n        std.debug.print(\"[{d}/2 example] {{any}}\\n\", .{{res_ex}});\n        const res = try day{d}.part2(real);\n        std.debug.print(\"[{d}/2] {{any}}\\n\", .{{res}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p2;
             var i: usize = 0;

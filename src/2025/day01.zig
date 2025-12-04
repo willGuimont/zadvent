@@ -8,7 +8,7 @@ pub fn part1(input: []const u8) !usize {
     while (i < input.len) : (i += 1) {
         if (input[i] == '\n') count += 1;
     }
-    return 1;
+    return count;
 }
 
 pub fn part2(input: []const u8) !usize {

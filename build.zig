@@ -97,9 +97,20 @@ pub fn build(b: *std.Build) void {
     }
 }
 
+fn partTemplate(part: usize) []const u8 {
+    if (part == 1) {
+        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n";
+    } else {
+        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n\n";
+    }
+}
+
+fn emitPart(comptime part: usize, tmp: []u8, d: usize) []const u8 {
+    return std.fmt.bufPrint(tmp, partTemplate(part), .{ d, d, d, d, d }) catch unreachable;
+}
+
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
     _ = use_color;
-    _ = part_opt;
 
     const allocator = std.heap.page_allocator;
     const cap: usize = 65536;
@@ -127,6 +138,8 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     }
 
     var tmp: [1024]u8 = undefined;
+    const do_p1 = std.mem.eql(u8, part_opt, "1") or std.mem.eql(u8, part_opt, "both");
+    const do_p2 = std.mem.eql(u8, part_opt, "2") or std.mem.eql(u8, part_opt, "both");
     // Emit settings into generated runner (USE_TIMER)
     const settings = std.fmt.bufPrint(&tmp, "const USE_TIMER: bool = {s};\n\n", .{if (use_timer) "true" else "false"}) catch unreachable;
     {
@@ -177,23 +190,27 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
-        {
-            const s = p1;
-            var i: usize = 0;
-            while (i < s.len) : (i += 1) {
-                buf[pos] = s[i];
-                pos += 1;
+        if (do_p1) {
+            const p1 = emitPart(1, tmp[0..], d);
+            {
+                const s = p1;
+                var i: usize = 0;
+                while (i < s.len) : (i += 1) {
+                    buf[pos] = s[i];
+                    pos += 1;
+                }
             }
         }
 
-        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
-        {
-            const s = p2;
-            var i: usize = 0;
-            while (i < s.len) : (i += 1) {
-                buf[pos] = s[i];
-                pos += 1;
+        if (do_p2) {
+            const p2 = emitPart(2, tmp[0..], d);
+            {
+                const s = p2;
+                var i: usize = 0;
+                while (i < s.len) : (i += 1) {
+                    buf[pos] = s[i];
+                    pos += 1;
+                }
             }
         }
     }

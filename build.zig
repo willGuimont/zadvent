@@ -98,7 +98,6 @@ pub fn build(b: *std.Build) void {
 }
 
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
-    _ = use_timer;
     _ = use_color;
     _ = part_opt;
 
@@ -128,6 +127,16 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     }
 
     var tmp: [1024]u8 = undefined;
+    // Emit settings into generated runner (USE_TIMER)
+    const settings = std.fmt.bufPrint(&tmp, "const USE_TIMER: bool = {s};\n\n", .{if (use_timer) "true" else "false"}) catch unreachable;
+    {
+        const s = settings;
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
     for (days) |d| {
         const import_line = std.fmt.bufPrint(&tmp, "    const day{d} = @import(\"day{d}\");\n", .{ d, d }) catch unreachable;
         {
@@ -168,7 +177,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const res_ex = try day{d}.part1(example);\n        std.debug.print(\"[{d}/1 example] {{any}}\\n\", .{{res_ex}});\n        const res = try day{d}.part1(real);\n        std.debug.print(\"[{d}/1] {{any}}\\n\", .{{res}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
+        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}us)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}us)\\n\", .{{res, dur}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p1;
             var i: usize = 0;
@@ -178,7 +187,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const res_ex = try day{d}.part2(example);\n        std.debug.print(\"[{d}/2 example] {{any}}\\n\", .{{res_ex}});\n        const res = try day{d}.part2(real);\n        std.debug.print(\"[{d}/2] {{any}}\\n\", .{{res}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
+        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}us)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}us)\\n\", .{{res, dur}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p2;
             var i: usize = 0;

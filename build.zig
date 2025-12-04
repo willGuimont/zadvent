@@ -1,156 +1,151 @@
 const std = @import("std");
 
-// Although this function looks imperative, it does not perform the build
-// directly and instead it mutates the build graph (`b`) that will be then
-// executed by an external runner. The functions in `std.Build` implement a DSL
-// for defining build steps and express dependencies between them, allowing the
-// build runner to parallelize the build automatically (and the cache system to
-// know when a step doesn't need to be re-run).
+pub const current_year = "2025";
+
 pub fn build(b: *std.Build) void {
-    // Standard target options allow the person running `zig build` to choose
-    // what target to build for. Here we do not override the defaults, which
-    // means any target is allowed, and the default is native. Other options
-    // for restricting supported target set are available.
     const target = b.standardTargetOptions(.{});
-    // Standard optimization options allow the person running `zig build` to select
-    // between Debug, ReleaseSafe, ReleaseFast, and ReleaseSmall. Here we do not
-    // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
-    // It's also possible to define more custom flags to toggle optional features
-    // of this build script using `b.option()`. All defined flags (including
-    // target and optimize options) will be listed when running `zig build --help`
-    // in this directory.
 
-    // This creates a module, which represents a collection of source files alongside
-    // some compilation options, such as optimization mode and linked system libraries.
-    // Zig modules are the preferred way of making Zig code available to consumers.
-    // addModule defines a module that we intend to make available for importing
-    // to our consumers. We must give it a name because a Zig package can expose
-    // multiple modules and consumers will need to be able to specify which
-    // module they want to access.
-    const mod = b.addModule("zadvent", .{
-        // The root source file is the "entry point" of this module. Users of
-        // this module will only be able to access public declarations contained
-        // in this file, which means that if you have declarations that you
-        // intend to expose to consumers that were defined in other files part
-        // of this module, you will have to make sure to re-export them from
-        // the root file.
-        .root_source_file = b.path("src/root.zig"),
-        // Later on we'll use this module as the root module of a test executable
-        // which requires us to specify a target.
-        .target = target,
-    });
+    const run_step = b.step("solve", "Run and print solution(s)");
+    const test_step = b.step("test", "Run unit tests for solution(s)");
 
-    // Here we define an executable. An executable needs to have a root module
-    // which needs to expose a `main` function. While we could add a main function
-    // to the module defined above, it's sometimes preferable to split business
-    // logic and the CLI into two separate modules.
-    //
-    // If your goal is to create a Zig library for others to use, consider if
-    // it might benefit from also exposing a CLI tool. A parser library for a
-    // data serialization format could also bundle a CLI syntax checker, for example.
-    //
-    // If instead your goal is to create an executable, consider if users might
-    // be interested in also being able to embed the core functionality of your
-    // program in their own executable in order to avoid the overhead involved in
-    // subprocessing your CLI tool.
-    //
-    // If neither case applies to you, feel free to delete the declaration you
-    // don't need and to put everything under a single module.
-    const exe = b.addExecutable(.{
-        .name = "zadvent",
-        .root_module = b.createModule(.{
-            // b.createModule defines a new module just like b.addModule but,
-            // unlike b.addModule, it does not expose the module to consumers of
-            // this package, which is why in this case we don't have to give it a name.
-            .root_source_file = b.path("src/main.zig"),
-            // Target and optimization levels must be explicitly wired in when
-            // defining an executable or library (in the root module), and you
-            // can also hardcode a specific target for an executable or library
-            // definition if desireable (e.g. firmware for embedded devices).
-            .target = target,
-            .optimize = optimize,
-            // List of modules available for import in source files part of the
-            // root module.
-            .imports = &.{
-                // Here "zadvent" is the name you will use in your source code to
-                // import this module (e.g. `@import("zadvent")`). The name is
-                // repeated because you are allowed to rename your imports, which
-                // can be extremely useful in case of collisions (which can happen
-                // importing modules from different packages).
-                .{ .name = "zadvent", .module = mod },
-            },
-        }),
-    });
+    // Top-level options (use b.option)
+    const days_option = b.option([]const u8, "days", "Solution day(s), e.g. '5', '1..7', '..12' (end-inclusive)");
+    const year_option = b.option([]const u8, "year", b.fmt("Solution directory (default: {s})", .{current_year})) orelse current_year;
+    const timer = b.option(bool, "time", "Print performance time of each solution (default: true)") orelse true;
+    const color = b.option(bool, "color", "Print ANSI color-coded output (default: true)") orelse true;
+    const stop_at_failure = b.option(bool, "fail-stop", "If a solution returns an error, exit (default: false)") orelse false;
+    _ = stop_at_failure;
+    const part = b.option([]const u8, "part", "Select which solution part to run ('1','2','both')") orelse "both";
 
-    // This declares intent for the executable to be installed into the
-    // install prefix when running `zig build` (i.e. when executing the default
-    // step). By default the install prefix is `zig-out/` but can be overridden
-    // by passing `--prefix` or `-p`.
-    b.installArtifact(exe);
+    const write_runner = b.addWriteFiles();
 
-    // This creates a top level step. Top level steps have a name and can be
-    // invoked by name when running `zig build` (e.g. `zig build run`).
-    // This will evaluate the `run` step rather than the default step.
-    // For a top level step to actually do something, it must depend on other
-    // steps (e.g. a Run step, as we will see in a moment).
-    const run_step = b.step("run", "Run the app");
-
-    // This creates a RunArtifact step in the build graph. A RunArtifact step
-    // invokes an executable compiled by Zig. Steps will only be executed by the
-    // runner if invoked directly by the user (in the case of top level steps)
-    // or if another step depends on it, so it's up to you to define when and
-    // how this Run step will be executed. In our case we want to run it when
-    // the user runs `zig build run`, so we create a dependency link.
-    const run_cmd = b.addRunArtifact(exe);
-    run_step.dependOn(&run_cmd.step);
-
-    // By making the run step depend on the default step, it will be run from the
-    // installation directory rather than directly from within the cache directory.
-    run_cmd.step.dependOn(b.getInstallStep());
-
-    // This allows the user to pass arguments to the application in the build
-    // command itself, like this: `zig build run -- arg1 arg2 etc`
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
+    // decide which days to generate for
+    var days_to_generate: []usize = &[_]usize{}; // default empty
+    if (days_option) |days_str| {
+        const allocator = b.allocator;
+        const parsed = parseIntRange(allocator, days_str, usize) catch {
+            const fail = b.addFail("Invalid range string for -Ddays");
+            run_step.dependOn(&fail.step);
+            test_step.dependOn(&fail.step);
+            return;
+        };
+        // convert []const usize to owned slice of usize
+        const tmp = allocator.alloc(usize, parsed.len) catch {
+            const fail = b.addFail("Out of memory allocating parsed days");
+            run_step.dependOn(&fail.step);
+            test_step.dependOn(&fail.step);
+            return;
+        };
+        for (0..parsed.len) |i| tmp[i] = parsed[i];
+        days_to_generate = tmp;
+        // free later not required here; build process ephemeral
     }
 
-    // Creates an executable that will run `test` blocks from the provided module.
-    // Here `mod` needs to define a target, which is why earlier we made sure to
-    // set the releative field.
-    const mod_tests = b.addTest(.{
-        .root_module = mod,
+    const runner_path = write_runner.add("aoc_runner.zig", buildRunnerSource(year_option, days_to_generate, timer, color, part));
+
+    const runner_mod = b.createModule(.{
+        .root_source_file = runner_path,
+        .target = target,
+        .optimize = optimize,
     });
 
-    // A run step that will run the test executable.
-    const run_mod_tests = b.addRunArtifact(mod_tests);
-
-    // Creates an executable that will run `test` blocks from the executable's
-    // root module. Note that test executables only test one module at a time,
-    // hence why we have to create two separate ones.
-    const exe_tests = b.addTest(.{
-        .root_module = exe.root_module,
+    const runner_exe = b.addExecutable(.{
+        .name = b.fmt("advent-of-code-{s}", .{year_option}),
+        .root_module = runner_mod,
     });
 
-    // A run step that will run the second test executable.
-    const run_exe_tests = b.addRunArtifact(exe_tests);
+    runner_exe.step.dependOn(&write_runner.step);
+    const run_cmd = b.addRunArtifact(runner_exe);
+    run_step.dependOn(&run_cmd.step);
+    run_cmd.setCwd(b.path("./"));
+    b.installArtifact(runner_exe);
 
-    // A top level step for running all tests. dependOn can be called multiple
-    // times and since the two run steps do not depend on one another, this will
-    // make the two of them run in parallel.
-    const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&run_mod_tests.step);
-    test_step.dependOn(&run_exe_tests.step);
+    // If no days were provided, fail the run and test steps with a helpful message
+    if (days_option == null) {
+        const fail = b.addFail("Please select the solution day(s) using -Ddays");
+        run_step.dependOn(&fail.step);
+        test_step.dependOn(&fail.step);
+    }
 
-    // Just like flags, top level steps are also listed in the `--help` menu.
-    //
-    // The Zig build system is entirely implemented in userland, which means
-    // that it cannot hook into private compiler APIs. All compilation work
-    // orchestrated by the build system will result in other Zig compiler
-    // subcommands being invoked with the right flags defined. You can observe
-    // these invocations when one fails (or you pass a flag to increase
-    // verbosity) to validate assumptions and diagnose problems.
-    //
-    // Lastly, the Zig build system is relatively simple and self-contained,
-    // and reading its source code will allow you to master it.
+    // create tests for specified day modules if any
+    if (days_option) |days_str| {
+        const allocator = b.allocator;
+        const parsed = parseIntRange(allocator, days_str, usize) catch {
+            const fail = b.addFail("Invalid range string for -Ddays");
+            run_step.dependOn(&fail.step);
+            test_step.dependOn(&fail.step);
+            return;
+        };
+        for (parsed) |day| {
+            if (day > 99) break; // sane guard
+            const day_path = b.path(b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day }));
+            const day_mod = b.createModule(.{
+                .root_source_file = day_path,
+                .target = target,
+                .optimize = optimize,
+            });
+            runner_mod.addImport(b.fmt("day_{d}", .{day}), day_mod);
+
+            const day_test = b.addTest(.{
+                .name = b.fmt("day-{d}-test", .{day}),
+                .root_module = day_mod,
+            });
+            const run_day_test = b.addRunArtifact(day_test);
+            test_step.dependOn(&run_day_test.step);
+        }
+    }
 }
+
+// removed tryOrFail helper; errors handled inline
+
+fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
+    // Minimal placeholder runner source. Replace with generator later.
+    _ = year;
+    _ = days;
+    _ = use_timer;
+    _ = use_color;
+    _ = part_opt;
+    return "pub fn main() anyerror!void { return; }";
+}
+
+// Parse a compact integer range string into an allocator-allocated slice of integers.
+fn parseIntRange(allocator: std.mem.Allocator, string: []const u8, comptime T: type) ![]T {
+    const fmt = std.fmt;
+    var dot_index: ?usize = null;
+    for (0..string.len) |i| {
+        if (string[i] == '.') {
+            dot_index = i;
+            break;
+        }
+    }
+    if (dot_index) |first_dot_index| {
+        if (first_dot_index == 0 and string.len > 1 and string[1] == '.') {
+            // ..N form
+            if (string.len <= 2) return error.InvalidCharacter;
+            const last = try fmt.parseUnsigned(T, string[2..], 10);
+            const list = try allocator.alloc(T, last);
+            for (0..list.len) |i| {
+                list[i] = @as(T, i + 1);
+            }
+            return list;
+        } else if (string.len > first_dot_index + 2 and string[first_dot_index + 1] == '.') {
+            const first = try fmt.parseUnsigned(T, string[0..first_dot_index], 10);
+            const last = try fmt.parseUnsigned(T, string[first_dot_index + 2 ..], 10);
+            if (last < first) return error.InvalidCharacter;
+            const cnt = last - first + 1;
+            const list = try allocator.alloc(T, cnt);
+            for (0..list.len) |i| {
+                list[i] = @as(T, first + i);
+            }
+            return list;
+        } else return error.InvalidCharacter;
+    } else {
+        const v = try fmt.parseUnsigned(T, string, 10);
+        const list = try allocator.alloc(T, 1);
+        list[0] = v;
+        return list;
+    }
+}
+
+pub const Day = u8;

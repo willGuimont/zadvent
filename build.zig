@@ -177,7 +177,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}us)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}us)\\n\", .{{res, dur}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
+        const p1 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p1;
             var i: usize = 0;
@@ -187,7 +187,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}us)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) (std.time.milliTimestamp() * 1000) else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) ((std.time.milliTimestamp() * 1000) - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}us)\\n\", .{{res, dur}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
+        const p2 = std.fmt.bufPrint(&tmp, "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n\n", .{ d, d, d, d, d }) catch unreachable;
         {
             const s = p2;
             var i: usize = 0;

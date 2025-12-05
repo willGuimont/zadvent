@@ -56,7 +56,27 @@ pub fn build(b: *std.Build) void {
     });
 
     runner_exe.step.dependOn(&write_runner.step);
+
+    // Fetch missing inputs before running
+    const fetch_step = b.step("fetch-inputs", "Fetch missing Advent of Code inputs");
+    if (days_option) |_| {
+        const fetch_mod = b.createModule(.{
+            .root_source_file = b.path("src/fetch_inputs_main.zig"),
+            .target = target,
+            .optimize = optimize,
+        });
+        const fetch_exe = b.addExecutable(.{
+            .name = "fetch-inputs",
+            .root_module = fetch_mod,
+        });
+        const fetch_cmd = b.addRunArtifact(fetch_exe);
+        fetch_cmd.setCwd(b.path("./"));
+        fetch_cmd.addArgs(&.{ year_option, days_option.? });
+        fetch_step.dependOn(&fetch_cmd.step);
+    }
+
     const run_cmd = b.addRunArtifact(runner_exe);
+    run_cmd.step.dependOn(fetch_step);
     run_step.dependOn(&run_cmd.step);
     run_cmd.setCwd(b.path("./"));
     b.installArtifact(runner_exe);

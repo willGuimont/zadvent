@@ -100,6 +100,52 @@ pub fn build(b: *std.Build) void {
         for (parsed) |day| {
             if (day > 25) break; // sane guard
             const day_path = b.path(b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day }));
+
+            // Create day file if it doesn't exist
+            const day_file_path = b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day });
+            std.fs.cwd().access(day_file_path, .{}) catch {
+                // File doesn't exist, create it
+                std.fs.cwd().makePath(b.fmt("src/{s}", .{year_option})) catch |err| {
+                    if (err != error.PathAlreadyExists) {
+                        const fail = b.addFail(b.fmt("Failed to create directory src/{s}", .{year_option}));
+                        run_step.dependOn(&fail.step);
+                        test_step.dependOn(&fail.step);
+                        return;
+                    }
+                };
+                const template =
+                    \\const std = @import("std");
+                    \\
+                    \\var buf1: [2048]u8 = undefined;
+                    \\
+                    \\pub fn part1(input: []const u8) ![]const u8 {
+                    \\    _ = input;
+                    \\    // Your solution here
+                    \\    return "not implemented";
+                    \\}
+                    \\
+                    \\pub fn part2(input: []const u8) ![]const u8 {
+                    \\    _ = input;
+                    \\    // Your solution here
+                    \\    return "not implemented";
+                    \\}
+                    \\
+                ;
+                const file = std.fs.cwd().createFile(day_file_path, .{}) catch {
+                    const fail = b.addFail(b.fmt("Failed to create file {s}", .{day_file_path}));
+                    run_step.dependOn(&fail.step);
+                    test_step.dependOn(&fail.step);
+                    return;
+                };
+                defer file.close();
+                file.writeAll(template) catch {
+                    const fail = b.addFail(b.fmt("Failed to write to file {s}", .{day_file_path}));
+                    run_step.dependOn(&fail.step);
+                    test_step.dependOn(&fail.step);
+                    return;
+                };
+            };
+
             const day_mod = b.createModule(.{
                 .root_source_file = day_path,
                 .target = target,
@@ -119,14 +165,14 @@ pub fn build(b: *std.Build) void {
 
 fn partTemplate(part: usize) []const u8 {
     if (part == 1) {
-        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 example]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n";
+        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example_{d});\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real_{d});\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n";
     } else {
-        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 example]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n\n";
+        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example_{d});\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real_{d});\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n\n";
     }
 }
 
 fn emitPart(comptime part: usize, tmp: []u8, d: usize) []const u8 {
-    return std.fmt.bufPrint(tmp, partTemplate(part), .{ d, d, d, d, d }) catch unreachable;
+    return std.fmt.bufPrint(tmp, partTemplate(part), .{ d, d, d, d, d, d, d }) catch unreachable;
 }
 
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
@@ -200,7 +246,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const paths = std.fmt.bufPrint(&tmp, "    const example_path = \"input/{s}/day{d:0>2}_example.txt\";\n    const real_path = \"input/{s}/day{d:0>2}.txt\";\n", .{ year, d, year, d }) catch unreachable;
+        const paths = std.fmt.bufPrint(&tmp, "    const example_path_{d} = \"input/{s}/day{d:0>2}_example.txt\";\n    const real_path_{d} = \"input/{s}/day{d:0>2}.txt\";\n", .{ d, year, d, d, year, d }) catch unreachable;
         {
             const s = paths;
             var i: usize = 0;
@@ -210,7 +256,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const read_inputs = std.fmt.bufPrint(&tmp, "    const example = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, example_path, 8192);\n    defer std.heap.page_allocator.free(example);\n    const real = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, real_path, 65536);\n    defer std.heap.page_allocator.free(real);\n", .{}) catch unreachable;
+        const read_inputs = std.fmt.bufPrint(&tmp, "    const example_{d} = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, example_path_{d}, 8192);\n    defer std.heap.page_allocator.free(example_{d});\n    const real_{d} = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, real_path_{d}, 65536);\n    defer std.heap.page_allocator.free(real_{d});\n", .{ d, d, d, d, d, d }) catch unreachable;
         {
             const s = read_inputs;
             var i: usize = 0;

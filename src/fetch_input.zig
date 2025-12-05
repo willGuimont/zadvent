@@ -100,4 +100,22 @@ pub fn fetchInputIfNotExists(
     try file.writeAll(response_buf[0..response_len]);
 
     std.debug.print("Fetched input for day {d} to {s}\n", .{ day, input_path });
+
+    // Create empty example file if it doesn't exist
+    var example_path_buf: [256]u8 = undefined;
+    const example_path = try std.fmt.bufPrint(
+        &example_path_buf,
+        "{s}/day{d:0>2}_example.txt",
+        .{ output_dir, day },
+    );
+
+    if (std.fs.cwd().openFile(example_path, .{})) |example_file| {
+        example_file.close();
+    } else |err| {
+        if (err == error.FileNotFound) {
+            var example_file = try std.fs.cwd().createFile(example_path, .{});
+            example_file.close();
+            std.debug.print("Created empty example file: {s}\n", .{example_path});
+        }
+    }
 }

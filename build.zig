@@ -99,9 +99,9 @@ pub fn build(b: *std.Build) void {
 
 fn partTemplate(part: usize) []const u8 {
     if (part == 1) {
-        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/1 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/1] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n";
+        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 example]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n";
     } else {
-        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        std.debug.print(\"[{d}/2 example] {{any}} ({{d}}ns)\\n\", .{{res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        std.debug.print(\"[{d}/2] {{any}} ({{d}}ns)\\n\", .{{res, dur}});\n    }}\n\n";
+        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example);\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 example]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real);\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2]{{s}} {{any}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n\n";
     }
 }
 
@@ -110,8 +110,6 @@ fn emitPart(comptime part: usize, tmp: []u8, d: usize) []const u8 {
 }
 
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
-    _ = use_color;
-
     const allocator = std.heap.page_allocator;
     const cap: usize = 65536;
     var buf = allocator.alloc(u8, cap) catch unreachable;
@@ -120,6 +118,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     // helper: append a slice to buf
     inline for (0..0) |_| {}
 
+    // prelude
     {
         const s = "const std = @import(\"std\");\n\n";
         var i: usize = 0;
@@ -140,16 +139,27 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     var tmp: [1024]u8 = undefined;
     const do_p1 = std.mem.eql(u8, part_opt, "1") or std.mem.eql(u8, part_opt, "both");
     const do_p2 = std.mem.eql(u8, part_opt, "2") or std.mem.eql(u8, part_opt, "both");
-    // Emit settings into generated runner (USE_TIMER)
-    const settings = std.fmt.bufPrint(&tmp, "const USE_TIMER: bool = {s};\n\n", .{if (use_timer) "true" else "false"}) catch unreachable;
+
+    // Emit settings into generated runner (USE_TIMER, USE_COLOR and color codes)
+    const settings1 = std.fmt.bufPrint(&tmp, "const USE_TIMER: bool = {s};\n", .{if (use_timer) "true" else "false"}) catch unreachable;
     {
-        const s = settings;
+        const s = settings1;
         var i: usize = 0;
         while (i < s.len) : (i += 1) {
             buf[pos] = s[i];
             pos += 1;
         }
     }
+    const settings2 = std.fmt.bufPrint(&tmp, "const USE_COLOR: bool = {s};\nconst COLOR_RED = \"\\x1b[31m\";\nconst COLOR_GREEN = \"\\x1b[32m\";\nconst COLOR_RESET = \"\\x1b[0m\";\n\n", .{if (use_color) "true" else "false"}) catch unreachable;
+    {
+        const s = settings2;
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+
     for (days) |d| {
         const import_line = std.fmt.bufPrint(&tmp, "    const day{d} = @import(\"day{d}\");\n", .{ d, d }) catch unreachable;
         {

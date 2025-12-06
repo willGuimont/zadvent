@@ -11,6 +11,7 @@ pub fn findBestJolts(cells: []const i64, comptime n: i64) !i64 {
     var state: [n + 1][101]i64 = [_][101]i64{[_]i64{0} ** 101} ** (n + 1);
     for (1..n + 1) |chosen| {
         for (1..cells.len + 1) |upTo| {
+            if (chosen > upTo) continue;
             const skip = state[chosen][upTo - 1];
             const taken = try combine(state[chosen - 1][upTo - 1], cells[upTo - 1]);
             state[chosen][upTo] = @max(skip, taken);

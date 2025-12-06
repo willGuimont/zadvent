@@ -1,6 +1,6 @@
 const std = @import("std");
 
-var buf1: [2048]u8 = undefined;
+var buf: [2048]u8 = undefined;
 
 pub fn part1(input: []const u8) ![]const u8 {
     var dial: i32 = 50;
@@ -20,7 +20,7 @@ pub fn part1(input: []const u8) ![]const u8 {
             numZeros += 1;
         }
     }
-    return std.fmt.bufPrint(&buf1, "{d}", .{numZeros}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{numZeros}) catch "error";
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
@@ -39,5 +39,5 @@ pub fn part2(input: []const u8) ![]const u8 {
         numZeros += @intCast(@abs(@divFloor(dial, 100)));
         dial = @mod(dial, 100);
     }
-    return std.fmt.bufPrint(&buf1, "{d}", .{numZeros}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{numZeros}) catch "error";
 }

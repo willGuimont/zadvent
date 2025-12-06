@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) void {
     const stop_at_failure = b.option(bool, "fail-stop", "If a solution returns an error, exit (default: false)") orelse false;
     _ = stop_at_failure;
     const part = b.option([]const u8, "part", "Select which solution part to run ('1','2','both')") orelse "both";
+    const input_kind = b.option([]const u8, "input", "Which inputs to run ('example','real','both')") orelse "both";
 
     const write_runner = b.addWriteFiles();
 
@@ -42,7 +43,7 @@ pub fn build(b: *std.Build) void {
         // free later not required here; build process ephemeral
     }
 
-    const runner_path = write_runner.add("aoc_runner.zig", buildRunnerSource(year_option, days_to_generate, timer, color, part));
+    const runner_path = write_runner.add("aoc_runner.zig", buildRunnerSource(year_option, days_to_generate, timer, color, part, input_kind));
 
     const runner_mod = b.createModule(.{
         .root_source_file = runner_path,
@@ -51,7 +52,7 @@ pub fn build(b: *std.Build) void {
     });
 
     const runner_exe = b.addExecutable(.{
-        .name = b.fmt("advent-of-code-{s}", .{year_option}),
+        .name = "advent-of-code",
         .root_module = runner_mod,
     });
 
@@ -116,18 +117,18 @@ pub fn build(b: *std.Build) void {
                 const template =
                     \\const std = @import("std");
                     \\
-                    \\var buf1: [2048]u8 = undefined;
+                    \\var buf: [2048]u8 = undefined;
                     \\
                     \\pub fn part1(input: []const u8) ![]const u8 {
                     \\    _ = input;
                     \\    // Your solution here
-                    \\    return "not implemented";
+                    \\    return std.fmt.bufPrint(&buf, "not implemented: {d}", .{0}) catch "error";
                     \\}
                     \\
                     \\pub fn part2(input: []const u8) ![]const u8 {
                     \\    _ = input;
                     \\    // Your solution here
-                    \\    return "not implemented";
+                    \\    return std.fmt.bufPrint(&buf, "not implemented: {d}", .{0}) catch "error";
                     \\}
                     \\
                 ;
@@ -165,9 +166,9 @@ pub fn build(b: *std.Build) void {
 
 fn partTemplate(part: usize) []const u8 {
     if (part == 1) {
-        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part1(example_{d});\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part1(real_{d});\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/1 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n";
+        return "    if (@hasDecl(day{d}, \"part1\")) {{\n        if (RUN_EXAMPLE) {{\n            const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n            const res_ex = try day{d}.part1(example_{d});\n            const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n            const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n            const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n            std.debug.print(\"{{s}}[{d}/1 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        }}\n        if (RUN_REAL) {{\n            const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n            const res = try day{d}.part1(real_{d});\n            const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n            const pre = if (USE_COLOR) COLOR_RED else \"\";\n            const post = if (USE_COLOR) COLOR_RESET else \"\";\n            std.debug.print(\"{{s}}[{d}/1 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n        }}\n    }}\n";
     } else {
-        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res_ex = try day{d}.part2(example_{d});\n        const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n        const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n        const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n        const res = try day{d}.part2(real_{d});\n        const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n        const pre = if (USE_COLOR) COLOR_RED else \"\";\n        const post = if (USE_COLOR) COLOR_RESET else \"\";\n        std.debug.print(\"{{s}}[{d}/2 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n    }}\n\n";
+        return "    if (@hasDecl(day{d}, \"part2\")) {{\n        if (RUN_EXAMPLE) {{\n            const start_ex = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n            const res_ex = try day{d}.part2(example_{d});\n            const dur_ex = if (USE_TIMER) (std.time.nanoTimestamp() - start_ex) else 0;\n            const pre_ex = if (USE_COLOR) COLOR_GREEN else \"\";\n            const post_ex = if (USE_COLOR) COLOR_RESET else \"\";\n            std.debug.print(\"{{s}}[{d}/2 example]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre_ex, post_ex, res_ex, dur_ex}});\n        }}\n        if (RUN_REAL) {{\n            const start = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n            const res = try day{d}.part2(real_{d});\n            const dur = if (USE_TIMER) (std.time.nanoTimestamp() - start) else 0;\n            const pre = if (USE_COLOR) COLOR_RED else \"\";\n            const post = if (USE_COLOR) COLOR_RESET else \"\";\n            std.debug.print(\"{{s}}[{d}/2 input]{{s}} {{s}} ({{d}}ns)\\n\", .{{pre, post, res, dur}});\n        }}\n    }}\n\n";
     }
 }
 
@@ -175,7 +176,7 @@ fn emitPart(comptime part: usize, tmp: []u8, d: usize) []const u8 {
     return std.fmt.bufPrint(tmp, partTemplate(part), .{ d, d, d, d, d, d, d }) catch unreachable;
 }
 
-fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8) []const u8 {
+fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8, input_opt: []const u8) []const u8 {
     const allocator = std.heap.page_allocator;
     const cap: usize = 65536;
     var buf = allocator.alloc(u8, cap) catch unreachable;
@@ -205,6 +206,8 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     var tmp: [1024]u8 = undefined;
     const do_p1 = std.mem.eql(u8, part_opt, "1") or std.mem.eql(u8, part_opt, "both");
     const do_p2 = std.mem.eql(u8, part_opt, "2") or std.mem.eql(u8, part_opt, "both");
+    const run_example = std.mem.eql(u8, input_opt, "example") or std.mem.eql(u8, input_opt, "both");
+    const run_real = std.mem.eql(u8, input_opt, "real") or std.mem.eql(u8, input_opt, "both");
 
     // Emit settings into generated runner (USE_TIMER, USE_COLOR and color codes)
     const settings1 = std.fmt.bufPrint(&tmp, "const USE_TIMER: bool = {s};\n", .{if (use_timer) "true" else "false"}) catch unreachable;
@@ -219,6 +222,15 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     const settings2 = std.fmt.bufPrint(&tmp, "const USE_COLOR: bool = {s};\nconst COLOR_RED = \"\\x1b[31m\";\nconst COLOR_GREEN = \"\\x1b[32m\";\nconst COLOR_RESET = \"\\x1b[0m\";\n\n", .{if (use_color) "true" else "false"}) catch unreachable;
     {
         const s = settings2;
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+    const settings3 = std.fmt.bufPrint(&tmp, "const RUN_EXAMPLE: bool = {s};\nconst RUN_REAL: bool = {s};\n\n", .{ if (run_example) "true" else "false", if (run_real) "true" else "false" }) catch unreachable;
+    {
+        const s = settings3;
         var i: usize = 0;
         while (i < s.len) : (i += 1) {
             buf[pos] = s[i];

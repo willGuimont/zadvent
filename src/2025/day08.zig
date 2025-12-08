@@ -48,10 +48,12 @@ pub fn part1(input: []const u8) ![]const u8 {
             }
         }
     }
-    const alloc = std.heap.page_allocator;
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
 
     const ConnMinHeap = min_heap.MinHeap(Connection, connectionComparator);
-    var heap = ConnMinHeap.init(alloc, {});
+    var heap = ConnMinHeap.init(allocator, {});
     defer heap.deinit();
 
     for (0..numPoints) |i| {
@@ -99,7 +101,7 @@ pub fn part1(input: []const u8) ![]const u8 {
         }
     }
 
-    var map = std.AutoHashMap(usize, usize).init(alloc);
+    var map = std.AutoHashMap(usize, usize).init(allocator);
     defer map.deinit();
     for (0..numPoints) |i| {
         if (circuit[i] == 0) continue; // Skip points not in any circuit
@@ -111,12 +113,12 @@ pub fn part1(input: []const u8) ![]const u8 {
         }
     }
 
-    var counts = try std.ArrayList(usize).initCapacity(alloc, 100);
-    defer counts.deinit(alloc);
+    var counts = try std.ArrayList(usize).initCapacity(allocator, 100);
+    defer counts.deinit(allocator);
 
     var vit = map.valueIterator();
     while (vit.next()) |value| {
-        try counts.append(alloc, value.*);
+        try counts.append(allocator, value.*);
     }
 
     std.mem.sort(usize, counts.items, {}, comptime std.sort.desc(usize));
@@ -145,17 +147,17 @@ pub fn part2(input: []const u8) ![]const u8 {
             }
         }
     }
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
     defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator2 = gpa.allocator();
 
     var mst_edges = try kruskal.kruskal(
         Point,
-        allocator,
+        allocator2,
         points[0..numPoints],
         pointDistance,
     );
-    defer mst_edges.deinit(allocator);
+    defer mst_edges.deinit(allocator2);
 
     if (mst_edges.items.len > 0) {
         const last_edge = mst_edges.items[mst_edges.items.len - 1];

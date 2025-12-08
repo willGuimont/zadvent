@@ -1,4 +1,6 @@
 const std = @import("std");
+const lib = @import("lib");
+const K = lib.kruskal;
 
 var buf: [2048]u8 = undefined;
 
@@ -9,10 +11,10 @@ const Point = struct {
 };
 const size: usize = 1000;
 
-pub fn distance(p1: Point, p2: Point) f64 {
-    const dx = @as(f64, @floatFromInt(p1.x - p2.x));
-    const dy = @as(f64, @floatFromInt(p1.y - p2.y));
-    const dz = @as(f64, @floatFromInt(p1.z - p2.z));
+pub fn pointDistance(p1: Point, p2: Point) f32 {
+    const dx = @as(f32, @floatFromInt(p1.x - p2.x));
+    const dy = @as(f32, @floatFromInt(p1.y - p2.y));
+    const dz = @as(f32, @floatFromInt(p1.z - p2.z));
 
     return std.math.sqrt(dx * dx + dy * dy + dz * dz);
 }
@@ -49,12 +51,12 @@ pub fn part1(input: []const u8) ![]const u8 {
             break;
         var firstIdx: usize = undefined;
         var secondIdx: usize = undefined;
-        var minDistance: f64 = std.math.inf(f64);
+        var minDistance: f32 = std.math.inf(f32);
         var didMatch: bool = false;
         for (0..numPoints - 1) |i| {
             for (i + 1..numPoints) |j| {
                 if (wereMatched[i][j]) continue;
-                const dist = distance(points[i], points[j]);
+                const dist = pointDistance(points[i], points[j]);
                 if (dist < minDistance) {
                     minDistance = dist;
                     firstIdx = i;
@@ -126,7 +128,7 @@ pub fn part1(input: []const u8) ![]const u8 {
     return std.fmt.bufPrint(&buf, "{d}", .{top1 * top2 * top3}) catch "error";
 }
 
-pub fn part2(input: []const u8) ![]const u8 {
+pub fn old_part2(input: []const u8) ![]const u8 {
     var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
     var numPoints: usize = 0;
 
@@ -165,12 +167,12 @@ pub fn part2(input: []const u8) ![]const u8 {
         if (allConnected) break;
         var firstIdx: usize = undefined;
         var secondIdx: usize = undefined;
-        var minDistance: f64 = std.math.inf(f64);
+        var minDistance: f32 = std.math.inf(f32);
         var didMatch: bool = false;
         for (0..numPoints - 1) |i| {
             for (i + 1..numPoints) |j| {
                 if (wereMatched[i][j]) continue;
-                const dist = distance(points[i], points[j]);
+                const dist = pointDistance(points[i], points[j]);
                 if (dist < minDistance) {
                     minDistance = dist;
                     firstIdx = i;
@@ -219,4 +221,43 @@ pub fn part2(input: []const u8) ![]const u8 {
     }
 
     return std.fmt.bufPrint(&buf, "{d}", .{lastConnection[0] * lastConnection[1]}) catch "error";
+}
+
+pub fn part2(input: []const u8) ![]const u8 {
+    var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
+    var numPoints: usize = 0;
+
+    var it = std.mem.splitAny(u8, input, "\n");
+    while (it.next()) |line| {
+        var parts = std.mem.splitAny(u8, line, ",");
+        if (parts.next()) |x| {
+            if (parts.next()) |y| {
+                if (parts.next()) |z| {
+                    const zz = std.mem.trim(u8, z, " \n");
+                    points[numPoints] = Point{ .x = try std.fmt.parseInt(i32, x, 10), .y = try std.fmt.parseInt(i32, y, 10), .z = try std.fmt.parseInt(i32, zz, 10) };
+                    numPoints += 1;
+                }
+            }
+        }
+    }
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    var mst_edges = try K.kruskal(
+        Point,
+        allocator,
+        points[0..numPoints],
+        pointDistance,
+    );
+    defer mst_edges.deinit(allocator);
+
+    if (mst_edges.items.len > 0) {
+        const last_edge = mst_edges.items[mst_edges.items.len - 1];
+        const p1 = points[last_edge.u];
+        const p2 = points[last_edge.v];
+        return std.fmt.bufPrint(&buf, "{d}", .{p1.x * p2.x}) catch "error";
+    }
+
+    return std.fmt.bufPrint(&buf, "{d}", .{0}) catch "error";
 }

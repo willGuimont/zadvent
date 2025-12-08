@@ -14,7 +14,7 @@ pub fn part1(input: []const u8) ![]const u8 {
         }
         irow += 1;
     }
-    var numAccessible: i32 = 0;
+    var num_accessible: i32 = 0;
     const deltas = [_]i32{ -1, 0, 1 };
     for (0..size) |i| {
         for (0..size) |j| {
@@ -30,10 +30,10 @@ pub fn part1(input: []const u8) ![]const u8 {
                     }
                 }
             }
-            if (neighbors < 4) numAccessible += 1;
+            if (neighbors < 4) num_accessible += 1;
         }
     }
-    return std.fmt.bufPrint(&buf, "{d}", .{numAccessible}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{num_accessible}) catch "error";
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
@@ -47,13 +47,13 @@ pub fn part2(input: []const u8) ![]const u8 {
         }
         irow += 1;
     }
-    var nextWorld = world;
-    var numAccessible: i32 = 0;
+    var next_world = world;
+    var num_accessible: i32 = 0;
     const deltas = [_]i32{ -1, 0, 1 };
-    var hasRemoved = true;
-    while (hasRemoved) {
-        hasRemoved = false;
-        nextWorld = world;
+    var has_removed = true;
+    while (has_removed) {
+        has_removed = false;
+        next_world = world;
         for (0..size) |i| {
             for (0..size) |j| {
                 if (world[i][j] == 0) continue;
@@ -69,13 +69,13 @@ pub fn part2(input: []const u8) ![]const u8 {
                     }
                 }
                 if (neighbors < 4) {
-                    numAccessible += 1;
-                    hasRemoved = true;
-                    nextWorld[i][j] = 0;
+                    num_accessible += 1;
+                    has_removed = true;
+                    next_world[i][j] = 0;
                 }
             }
         }
-        world = nextWorld;
+        world = next_world;
     }
-    return std.fmt.bufPrint(&buf, "{d}", .{numAccessible}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{num_accessible}) catch "error";
 }

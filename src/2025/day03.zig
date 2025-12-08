@@ -22,16 +22,16 @@ pub fn findBestJolts(cells: []const i64, comptime n: i64) !i64 {
 
 pub fn solve(input: []const u8, comptime n: usize) ![]const u8 {
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
-    var totalJolts: i64 = 0;
+    var total_jolts: i64 = 0;
     var digits: [100]i64 = undefined;
     while (it.next()) |s| {
         for (s, 0..) |c, i| {
             if (c < '0' or c > '9') return error.InvalidDigit;
             digits[i] = @intCast(c - '0');
         }
-        totalJolts += try findBestJolts(digits[0..s.len], n);
+        total_jolts += try findBestJolts(digits[0..s.len], n);
     }
-    return std.fmt.bufPrint(&buf, "{d}", .{totalJolts}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{total_jolts}) catch "error";
 }
 
 pub fn part1(input: []const u8) ![]const u8 {

@@ -152,6 +152,15 @@ pub fn build(b: *std.Build) void {
                 .target = target,
                 .optimize = optimize,
             });
+            
+            // Add lib module to all days
+            const lib_mod = b.createModule(.{
+                .root_source_file = b.path("src/lib.zig"),
+                .target = target,
+                .optimize = optimize,
+            });
+            day_mod.addImport("lib", lib_mod);
+            
             runner_mod.addImport(b.fmt("day{d}", .{day}), day_mod);
 
             const day_test = b.addTest(.{

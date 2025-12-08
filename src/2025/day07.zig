@@ -5,78 +5,78 @@ const size: usize = 143;
 
 pub fn part1(input: []const u8) ![]const u8 {
     var world: [size][size]u8 = undefined;
-    var actualSize: usize = 0;
+    var actual_size: usize = 0;
 
     var it = std.mem.splitAny(u8, input, "\n");
-    var lineNum: usize = 0;
+    var line_num: usize = 0;
     while (it.next()) |line| {
-        actualSize = @max(actualSize, line.len);
-        @memcpy(world[lineNum][0..line.len], line);
-        lineNum += 1;
+        actual_size = @max(actual_size, line.len);
+        @memcpy(world[line_num][0..line.len], line);
+        line_num += 1;
     }
 
-    const startingPoint = std.mem.indexOf(u8, &world[0], "S").?;
-    var currentLine = [_]u8{'.'} ** size;
-    currentLine[startingPoint] = '|';
+    const starting_point = std.mem.indexOf(u8, &world[0], "S").?;
+    var current_line = [_]u8{'.'} ** size;
+    current_line[starting_point] = '|';
 
-    var numSplits: usize = 0;
-    for (1..actualSize) |lineIdx| {
-        const worldLine = world[lineIdx];
-        var nextLine = [_]u8{'.'} ** size;
-        for (0..actualSize) |i| {
-            if (currentLine[i] == '|') {
-                if (worldLine[i] == '^') {
-                    nextLine[i - 1] = '|';
-                    nextLine[i + 1] = '|';
-                    numSplits += 1;
+    var num_splits: usize = 0;
+    for (1..actual_size) |lineIdx| {
+        const world_line = world[lineIdx];
+        var next_line = [_]u8{'.'} ** size;
+        for (0..actual_size) |i| {
+            if (current_line[i] == '|') {
+                if (world_line[i] == '^') {
+                    next_line[i - 1] = '|';
+                    next_line[i + 1] = '|';
+                    num_splits += 1;
                 } else {
-                    nextLine[i] = '|';
+                    next_line[i] = '|';
                 }
             }
         }
-        currentLine = nextLine;
+        current_line = next_line;
     }
 
-    return std.fmt.bufPrint(&buf, "{d}", .{numSplits}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{num_splits}) catch "error";
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
     var world: [size][size]u8 = undefined;
-    var actualSize: usize = 0;
+    var actual_size: usize = 0;
 
     var it = std.mem.splitAny(u8, input, "\n");
-    var lineNum: usize = 0;
+    var line_num: usize = 0;
     while (it.next()) |line| {
-        actualSize = @max(actualSize, line.len);
-        @memcpy(world[lineNum][0..line.len], line);
-        lineNum += 1;
+        actual_size = @max(actual_size, line.len);
+        @memcpy(world[line_num][0..line.len], line);
+        line_num += 1;
     }
 
-    const startingPoint = std.mem.indexOf(u8, &world[0], "S").?;
-    var currentLine = [_]i64{0} ** size;
-    currentLine[startingPoint] = 1;
+    const starting_point = std.mem.indexOf(u8, &world[0], "S").?;
+    var current_line = [_]i64{0} ** size;
+    current_line[starting_point] = 1;
 
-    for (1..actualSize) |lineIdx| {
-        const worldLine = world[lineIdx];
-        var nextLine = [_]i64{0} ** size;
-        for (0..actualSize) |i| {
-            const numBeams = currentLine[i];
-            if (numBeams > 0) {
-                if (worldLine[i] == '^') {
-                    nextLine[i - 1] += numBeams;
-                    nextLine[i + 1] += numBeams;
+    for (1..actual_size) |lineIdx| {
+        const world_line = world[lineIdx];
+        var next_line = [_]i64{0} ** size;
+        for (0..actual_size) |i| {
+            const num_beams = current_line[i];
+            if (num_beams > 0) {
+                if (world_line[i] == '^') {
+                    next_line[i - 1] += num_beams;
+                    next_line[i + 1] += num_beams;
                 } else {
-                    nextLine[i] += numBeams;
+                    next_line[i] += num_beams;
                 }
             }
         }
-        currentLine = nextLine;
+        current_line = next_line;
     }
 
-    var totalPath: i64 = 0;
-    for (0..actualSize) |i| {
-        totalPath += currentLine[i];
+    var total_path: i64 = 0;
+    for (0..actual_size) |i| {
+        total_path += current_line[i];
     }
 
-    return std.fmt.bufPrint(&buf, "{d}", .{totalPath}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{total_path}) catch "error";
 }

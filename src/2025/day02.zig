@@ -11,7 +11,7 @@ pub fn splitOnce(s: []const u8, c: u8) struct { before: []const u8, after: []con
 
 pub fn part1(input: []const u8) ![]const u8 {
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
-    var invalidSum: u64 = 0;
+    var invalid_sum: u64 = 0;
     while (it.next()) |s| {
         if (s.len == 0) continue;
 
@@ -25,12 +25,12 @@ pub fn part1(input: []const u8) ![]const u8 {
             if (@mod(asText.len, 2) == 0) {
                 const half = @divTrunc(asText.len, 2);
                 if (std.mem.eql(u8, buf[0..half], buf[half..asText.len])) {
-                    invalidSum += id;
+                    invalid_sum += id;
                 }
             }
         }
     }
-    return std.fmt.bufPrint(&buf, "{d}", .{invalidSum}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{invalid_sum}) catch "error";
 }
 
 pub fn areChunksEqual(s: []const u8, n: usize) bool {
@@ -60,7 +60,7 @@ pub fn isRepeatedPattern(s: []const u8) bool {
 
 pub fn part2(input: []const u8) ![]const u8 {
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
-    var invalidSum: u64 = 0;
+    var invalid_sum: u64 = 0;
     while (it.next()) |s| {
         if (s.len == 0) continue;
 
@@ -72,9 +72,9 @@ pub fn part2(input: []const u8) ![]const u8 {
         while (id <= end) : (id += 1) {
             const asText = std.fmt.bufPrint(&buf, "{d}", .{id}) catch return error.InvalidInput;
             if (isRepeatedPattern(asText)) {
-                invalidSum += id;
+                invalid_sum += id;
             }
         }
     }
-    return std.fmt.bufPrint(&buf, "{d}", .{invalidSum}) catch "error";
+    return std.fmt.bufPrint(&buf, "{d}", .{invalid_sum}) catch "error";
 }

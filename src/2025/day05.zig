@@ -19,22 +19,22 @@ pub fn splitOnce(s: []const u8, c: u8) struct { before: []const u8, after: []con
 pub fn part1(input: []const u8) ![]const u8 {
     var ranges: [size]Range = undefined;
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
-    var rangeCount: usize = 0;
+    var range_count: usize = 0;
     while (it.next()) |part| {
         if (part.len == 0) break;
         const range = splitOnce(part, '-');
         const start = try std.fmt.parseInt(i64, range.before, 10);
         const end = try std.fmt.parseInt(i64, range.after, 10);
-        ranges[rangeCount].start = start;
-        ranges[rangeCount].end = end;
-        ranges[rangeCount].valid = true;
-        rangeCount += 1;
+        ranges[range_count].start = start;
+        ranges[range_count].end = end;
+        ranges[range_count].valid = true;
+        range_count += 1;
     }
 
     var feshCount: usize = 0;
     while (it.next()) |sid| {
         const id = try std.fmt.parseInt(i64, sid, 10);
-        for (ranges[0..rangeCount]) |range| {
+        for (ranges[0..range_count]) |range| {
             if (id >= range.start and id <= range.end) {
                 feshCount += 1;
                 break;
@@ -62,9 +62,9 @@ pub fn lessThanRange(_: void, lhs: Range, rhs: Range) bool {
 }
 
 pub fn combineRanges(ranges: []Range) void {
-    var wasUpdated = true;
-    while (wasUpdated) {
-        wasUpdated = false;
+    var was_updated = true;
+    while (was_updated) {
+        was_updated = false;
         sortRanges(ranges[0..ranges.len]);
         for (0..ranges.len - 1) |i| {
             for (i + 1..ranges.len) |j| {
@@ -73,7 +73,7 @@ pub fn combineRanges(ranges: []Range) void {
                 if (ranges[i].end + 1 >= ranges[j].start) {
                     ranges[i].end = @max(ranges[i].end, ranges[j].end);
                     ranges[j].valid = false;
-                    wasUpdated = true;
+                    was_updated = true;
                     break;
                 }
             }
@@ -84,21 +84,21 @@ pub fn combineRanges(ranges: []Range) void {
 pub fn part2(input: []const u8) ![]const u8 {
     var ranges: [size]Range = undefined;
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
-    var rangeCount: usize = 0;
+    var range_count: usize = 0;
     while (it.next()) |part| {
         if (part.len == 0) break;
         const range = splitOnce(part, '-');
         const start = try std.fmt.parseInt(i64, range.before, 10);
         const end = try std.fmt.parseInt(i64, range.after, 10);
-        ranges[rangeCount].start = start;
-        ranges[rangeCount].end = end;
-        ranges[rangeCount].valid = true;
-        rangeCount += 1;
+        ranges[range_count].start = start;
+        ranges[range_count].end = end;
+        ranges[range_count].valid = true;
+        range_count += 1;
     }
-    combineRanges(ranges[0..rangeCount]);
+    combineRanges(ranges[0..range_count]);
 
     var total: i64 = 0;
-    for (ranges[0..rangeCount]) |range| {
+    for (ranges[0..range_count]) |range| {
         if (range.valid) total += range.end - range.start + 1;
     }
 

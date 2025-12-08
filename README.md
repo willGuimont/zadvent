@@ -73,6 +73,19 @@ zig build -Dyear=2024 -Ddays=1 solve
 zig build -Ddays=1 -Dinput=example solve
 ```
 
+### Run Tests
+
+```sh
+# Run tests for a specific day
+zig build -Ddays=1 test
+
+# Run tests for multiple days
+zig build -Ddays=1..5 test
+
+# Run tests for lib modules
+zig build test-lib
+```
+
 ### Manual Input Fetching
 
 Inputs are fetched automatically when running solutions. To manually fetch inputs:

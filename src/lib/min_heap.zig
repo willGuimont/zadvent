@@ -137,7 +137,6 @@ test "MinHeap push and pop ordering" {
     try heap.push(7);
     try heap.push(1);
 
-    try std.testing.expect(false);
     try std.testing.expectEqual(heap.pop(), 1);
     try std.testing.expectEqual(heap.pop(), 3);
     try std.testing.expectEqual(heap.pop(), 5);

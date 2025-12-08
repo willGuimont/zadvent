@@ -8,6 +8,7 @@ pub fn build(b: *std.Build) void {
 
     const run_step = b.step("solve", "Run and print solution(s)");
     const test_step = b.step("test", "Run unit tests for solution(s)");
+    const test_lib_step = b.step("test-lib", "Run unit tests for lib modules");
 
     // Top-level options (use b.option)
     const days_option = b.option([]const u8, "days", "Solution day(s), e.g. '5', '1..7', '..12' (end-inclusive)");
@@ -58,6 +59,14 @@ pub fn build(b: *std.Build) void {
     });
 
     runner_mod.addImport("lib", lib_mod);
+
+    // Add lib tests
+    const lib_test = b.addTest(.{
+        .name = "lib-test",
+        .root_module = lib_mod,
+    });
+    const run_lib_test = b.addRunArtifact(lib_test);
+    test_lib_step.dependOn(&run_lib_test.step);
 
     const runner_exe = b.addExecutable(.{
         .name = "advent-of-code",
@@ -162,7 +171,7 @@ pub fn build(b: *std.Build) void {
                 .optimize = optimize,
             });
             day_mod.addImport("lib", lib_mod);
-            
+
             runner_mod.addImport(b.fmt("day{d}", .{day}), day_mod);
 
             const day_test = b.addTest(.{

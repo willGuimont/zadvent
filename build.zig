@@ -45,11 +45,18 @@ pub fn build(b: *std.Build) void {
 
     const runner_path = write_runner.add("aoc_runner.zig", buildRunnerSource(year_option, days_to_generate, timer, color, part, input_kind));
 
+    const lib_mod = b.createModule(.{
+        .root_source_file = b.path("src/lib.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+
     const runner_mod = b.createModule(.{
         .root_source_file = runner_path,
         .target = target,
         .optimize = optimize,
     });
+    runner_mod.addImport("lib", lib_mod);
 
     const runner_exe = b.addExecutable(.{
         .name = "advent-of-code",
@@ -149,13 +156,6 @@ pub fn build(b: *std.Build) void {
 
             const day_mod = b.createModule(.{
                 .root_source_file = day_path,
-                .target = target,
-                .optimize = optimize,
-            });
-            
-            // Add lib module to all days
-            const lib_mod = b.createModule(.{
-                .root_source_file = b.path("src/lib.zig"),
                 .target = target,
                 .optimize = optimize,
             });

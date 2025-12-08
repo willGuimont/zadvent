@@ -112,3 +112,58 @@ pub fn kruskal(comptime V: type, allocator: Allocator, vertices: []const V, weig
     all_edges.deinit(allocator);
     return mst_edges;
 }
+
+// Unit tests
+test "DSU union and find" {
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    var dsu = try DSU.init(allocator, 5);
+    defer dsu.deinit();
+
+    try std.testing.expectEqual(dsu.find(0), 0);
+    try std.testing.expectEqual(dsu.find(1), 1);
+
+    try std.testing.expect(dsu.conj(0, 1));
+    try std.testing.expectEqual(dsu.find(0), dsu.find(1));
+
+    try std.testing.expect(dsu.conj(1, 2));
+    try std.testing.expectEqual(dsu.find(0), dsu.find(2));
+
+    try std.testing.expect(!dsu.conj(0, 1));
+}
+
+test "Kruskal simple MST" {
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const Point = struct {
+        x: i32,
+        y: i32,
+    };
+
+    const dist = struct {
+        fn f(a: Point, b: Point) f32 {
+            const dx = @as(f32, @floatFromInt(a.x - b.x));
+            const dy = @as(f32, @floatFromInt(a.y - b.y));
+            return std.math.sqrt(dx * dx + dy * dy);
+        }
+    }.f;
+
+    var verts = [_]Point{
+        .{ .x = 0, .y = 0 },
+        .{ .x = 1, .y = 0 },
+        .{ .x = 2, .y = 0 },
+    };
+
+    var mst = try kruskal(Point, allocator, &verts, dist);
+    defer mst.deinit(allocator);
+
+    try std.testing.expectEqual(mst.items.len, 2);
+
+    var total: f32 = 0;
+    for (mst.items) |e| total += e.weight;
+    try std.testing.expectApproxEqAbs(total, 2.0, 0.0001);
+}

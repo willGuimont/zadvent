@@ -115,3 +115,79 @@ pub fn MinHeapWithContext(comptime T: type, comptime Context: type, comptime les
 pub fn MinHeap(comptime U: type, comptime lessThanFn: fn (void, U, U) bool) type {
     return MinHeapWithContext(U, void, lessThanFn);
 }
+
+// Unit tests
+test "MinHeap push and pop ordering" {
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const Cmp = fn (void, i32, i32) bool;
+    const cmp: Cmp = struct {
+        fn f(_: void, a: i32, b: i32) bool {
+            return a < b;
+        }
+    }.f;
+
+    var heap = MinHeap(i32, cmp).init(allocator, {});
+    defer heap.deinit();
+
+    try heap.push(5);
+    try heap.push(3);
+    try heap.push(7);
+    try heap.push(1);
+
+    try std.testing.expect(false);
+    try std.testing.expectEqual(heap.pop(), 1);
+    try std.testing.expectEqual(heap.pop(), 3);
+    try std.testing.expectEqual(heap.pop(), 5);
+    try std.testing.expectEqual(heap.pop(), 7);
+    try std.testing.expectEqual(heap.pop(), null);
+}
+
+test "MinHeap peek keeps element" {
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const Cmp = fn (void, i32, i32) bool;
+    const cmp: Cmp = struct {
+        fn f(_: void, a: i32, b: i32) bool {
+            return a < b;
+        }
+    }.f;
+
+    var heap = MinHeap(i32, cmp).init(allocator, {});
+    defer heap.deinit();
+
+    try heap.push(5);
+    try heap.push(3);
+
+    const top = heap.peek();
+    try std.testing.expect(top != null);
+    try std.testing.expectEqual(top.?.*, 3);
+
+    try std.testing.expectEqual(heap.pop(), 3);
+}
+
+test "MinHeap is_empty tracking" {
+    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    const Cmp = fn (void, i32, i32) bool;
+    const cmp: Cmp = struct {
+        fn f(_: void, a: i32, b: i32) bool {
+            return a < b;
+        }
+    }.f;
+
+    var heap = MinHeap(i32, cmp).init(allocator, {});
+    defer heap.deinit();
+
+    try std.testing.expect(heap.is_empty());
+    try heap.push(42);
+    try std.testing.expect(!heap.is_empty());
+    _ = heap.pop();
+    try std.testing.expect(heap.is_empty());
+}

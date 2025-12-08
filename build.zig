@@ -45,17 +45,18 @@ pub fn build(b: *std.Build) void {
 
     const runner_path = write_runner.add("aoc_runner.zig", buildRunnerSource(year_option, days_to_generate, timer, color, part, input_kind));
 
+    const runner_mod = b.createModule(.{
+        .root_source_file = runner_path,
+        .target = target,
+        .optimize = optimize,
+    });
+
     const lib_mod = b.createModule(.{
         .root_source_file = b.path("src/lib.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    const runner_mod = b.createModule(.{
-        .root_source_file = runner_path,
-        .target = target,
-        .optimize = optimize,
-    });
     runner_mod.addImport("lib", lib_mod);
 
     const runner_exe = b.addExecutable(.{
@@ -106,6 +107,7 @@ pub fn build(b: *std.Build) void {
             return;
         };
         for (parsed) |day| {
+            if (std.mem.eql(u8, year_option, "2025") and day > 12) break; // 2025 only has 12 days
             if (day > 25) break; // sane guard
             const day_path = b.path(b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day }));
 

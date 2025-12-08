@@ -118,9 +118,7 @@ pub fn MinHeap(comptime U: type, comptime lessThanFn: fn (void, U, U) bool) type
 
 // Unit tests
 test "MinHeap push and pop ordering" {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.testing.allocator;
 
     const Cmp = fn (void, i32, i32) bool;
     const cmp: Cmp = struct {
@@ -145,9 +143,7 @@ test "MinHeap push and pop ordering" {
 }
 
 test "MinHeap peek keeps element" {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.testing.allocator;
 
     const Cmp = fn (void, i32, i32) bool;
     const cmp: Cmp = struct {
@@ -170,9 +166,7 @@ test "MinHeap peek keeps element" {
 }
 
 test "MinHeap is_empty tracking" {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.testing.allocator;
 
     const Cmp = fn (void, i32, i32) bool;
     const cmp: Cmp = struct {

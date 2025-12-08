@@ -115,9 +115,7 @@ pub fn kruskal(comptime V: type, allocator: Allocator, vertices: []const V, weig
 
 // Unit tests
 test "DSU union and find" {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.testing.allocator;
 
     var dsu = try DSU.init(allocator, 5);
     defer dsu.deinit();
@@ -135,9 +133,7 @@ test "DSU union and find" {
 }
 
 test "Kruskal simple MST" {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.testing.allocator;
 
     const Point = struct {
         x: i32,

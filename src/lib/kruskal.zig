@@ -13,6 +13,7 @@ pub const DSU = struct {
     rank: []usize,
     allocator: Allocator,
 
+    /// Allocate and initialize disjoint-set storage for `num_elements` nodes.
     pub fn init(allocator: Allocator, num_elements: usize) !This {
         const parent = try allocator.alloc(usize, num_elements);
         const rank_arr = try allocator.alloc(usize, num_elements);
@@ -27,11 +28,13 @@ pub const DSU = struct {
         };
     }
 
+    /// Release allocated DSU buffers.
     pub fn deinit(self: This) void {
         self.allocator.free(self.parent);
         self.allocator.free(self.rank);
     }
 
+    /// Find the representative for `i`, performing path compression.
     pub fn find(self: *This, i: usize) usize {
         if (self.parent[i] != i) {
             self.parent[i] = self.find(self.parent[i]);
@@ -39,6 +42,7 @@ pub const DSU = struct {
         return self.parent[i];
     }
 
+    /// Union the sets containing `i` and `j`; return true if merged.
     pub fn conj(self: *DSU, i: usize, j: usize) bool {
         const root_i = self.find(i);
         const root_j = self.find(j);
@@ -58,14 +62,18 @@ pub const DSU = struct {
     }
 };
 
+/// Compare two edges by weight for ascending sort.
 pub fn compareEdges(context: void, a: Edge, b: Edge) bool {
     _ = context;
     return a.weight < b.weight;
 }
 
+/// Build a minimum spanning tree from `vertices` using Kruskal's algorithm and
+/// return the selected edges in ascending weight order.
 pub fn kruskal(comptime V: type, allocator: Allocator, vertices: []const V, weight_fn: fn (V, V) f32) !std.ArrayList(Edge) {
     const num_vertices = vertices.len;
 
+    // Generate all unique undirected edges.
     var all_edges = try std.ArrayList(Edge).initCapacity(allocator, num_vertices * (num_vertices - 1) / 2);
     errdefer all_edges.deinit(allocator);
 
@@ -76,8 +84,10 @@ pub fn kruskal(comptime V: type, allocator: Allocator, vertices: []const V, weig
         }
     }
 
+    // Sort edges so we can greedily pick the lightest non-cycling ones.
     std.mem.sort(Edge, all_edges.items, {}, compareEdges);
 
+    // Collect edges that end up in the MST.
     var mst_edges = try std.ArrayList(Edge).initCapacity(allocator, num_vertices - 1);
     errdefer mst_edges.deinit(allocator);
 
@@ -92,6 +102,7 @@ pub fn kruskal(comptime V: type, allocator: Allocator, vertices: []const V, weig
             break;
         }
 
+        // Add edge if it connects two different components.
         if (dsu.conj(edge.u, edge.v)) {
             try mst_edges.append(allocator, edge);
             edges_count += 1;

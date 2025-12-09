@@ -258,6 +258,17 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
         }
     }
 
+    // Global timer for the whole run (all selected days and parts).
+    const settings4 = "    const TOTAL_START = if (USE_TIMER) std.time.nanoTimestamp() else 0;\n\n";
+    {
+        const s = settings4;
+        var i: usize = 0;
+        while (i < s.len) : (i += 1) {
+            buf[pos] = s[i];
+            pos += 1;
+        }
+    }
+
     for (days) |d| {
         const import_line = std.fmt.bufPrint(&tmp, "    const day{d} = @import(\"day{d}\");\n", .{ d, d }) catch unreachable;
         {
@@ -324,7 +335,14 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     }
 
     {
-        const s = "    return;\n}\n";
+        const s =
+            "    if (USE_TIMER) {\n" ++
+            "        const total_ns = std.time.nanoTimestamp() - TOTAL_START;\n" ++
+            "        const total_ms: u64 = @as(u64, @intCast(@divTrunc(total_ns, std.time.ns_per_ms)));\n" ++
+            "        std.debug.print(\"Total time: {d}ms\\n\", .{total_ms});\n" ++
+            "    }\n" ++
+            "    return;\n" ++
+            "}\n";
         var i: usize = 0;
         while (i < s.len) : (i += 1) {
             buf[pos] = s[i];

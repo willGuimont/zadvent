@@ -71,6 +71,9 @@ zig build -Dyear=2024 -Ddays=1 solve
 
 # Choose input set: example, real, or both (default)
 zig build -Ddays=1 -Dinput=example solve
+
+# Build with release-fast optimization
+zig build -Ddays=1 -Doptimize=ReleaseFast solve
 ```
 
 ### Run Tests

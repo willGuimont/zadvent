@@ -1,4 +1,5 @@
 const std = @import("std");
+const splitOnce = @import("lib").str_utils.splitOnce;
 
 var buf: [2048]u8 = undefined;
 const size = 200;
@@ -8,13 +9,6 @@ const Range = struct {
     end: i64,
     valid: bool,
 };
-
-pub fn splitOnce(s: []const u8, c: u8) struct { before: []const u8, after: []const u8 } {
-    if (std.mem.indexOfScalar(u8, s, c)) |pos| {
-        return .{ .before = s[0..pos], .after = s[pos + 1 ..] };
-    }
-    return .{ .before = s, .after = "" };
-}
 
 pub fn part1(input: []const u8) ![]const u8 {
     var ranges: [size]Range = undefined;

@@ -48,9 +48,7 @@ pub fn part1(input: []const u8) ![]const u8 {
             }
         }
     }
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.heap.page_allocator;
 
     const ConnMinHeap = min_heap.MinHeap(Connection, connectionComparator);
     var heap = ConnMinHeap.init(allocator, {});
@@ -147,17 +145,15 @@ pub fn part2(input: []const u8) ![]const u8 {
             }
         }
     }
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator2 = gpa.allocator();
+    const allocator = std.heap.page_allocator;
 
     var mst_edges = try kruskal.kruskal(
         Point,
-        allocator2,
+        allocator,
         points[0..numPoints],
         pointDistance,
     );
-    defer mst_edges.deinit(allocator2);
+    defer mst_edges.deinit(allocator);
 
     if (mst_edges.items.len > 0) {
         const last_edge = mst_edges.items[mst_edges.items.len - 1];

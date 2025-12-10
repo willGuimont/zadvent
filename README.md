@@ -147,11 +147,26 @@ return std.fmt.bufPrint(&buf, "{d}", .{result}) catch "error";
 ## Example Output
 
 ```
+$ zig build -Doptimize=ReleaseFast -Ddays=1..2 -Dinput=both solve
 Input file already exists: input/2025/day01.txt
-[1/1 example] 11 (15000ns)
-[1/1 input] 2904518 (85000ns)
-[1/2 example] 31 (12000ns)
-[1/2 input] 18650129 (120000ns)
+Input file already exists: input/2025/day02.txt
+[1/1 example] 3
+ ╰─ ⏱ 0 ns
+[1/1 input] 1177
+ ╰─ ⏱ 55000 ns
+[1/2 example] 6
+ ╰─ ⏱ 0 ns
+[1/2 input] 6738
+ ╰─ ⏱ 52000 ns
+[2/1 example] 1227775554
+ ╰─ ⏱ 3000 ns
+[2/1 input] 54234399924
+ ╰─ ⏱ 17564000 ns
+[2/2 example] 4174379265
+ ╰─ ⏱ 4000 ns
+[2/2 input] 70187097315
+ ╰─ ⏱ 29510000 ns
+Total time: 48ms
 ```
 
 - Green text: example input results

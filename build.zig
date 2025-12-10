@@ -208,9 +208,6 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
     var buf = allocator.alloc(u8, cap) catch unreachable;
     var pos: usize = 0;
 
-    // helper: append a slice to buf
-    inline for (0..0) |_| {}
-
     // prelude
     {
         const s = "const std = @import(\"std\");\n\n";

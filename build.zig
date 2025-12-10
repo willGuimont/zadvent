@@ -109,24 +109,30 @@ pub fn build(b: *std.Build) void {
     // create tests for specified day modules if any
     if (days_option) |days_str| {
         const allocator = b.allocator;
-        const parsed = parseIntRange(allocator, days_str, usize) catch {
+        const parsed_days = parseIntRange(allocator, days_str, usize) catch {
             const fail = b.addFail("Invalid range string for -Ddays");
             run_step.dependOn(&fail.step);
             test_step.dependOn(&fail.step);
             return;
         };
-        for (parsed) |day| {
-            if (std.mem.eql(u8, year_option, "2025") and day > 12) break; // 2025 only has 12 days
+        const parsed_years = std.fmt.parseInt(usize, year_option, 10) catch {
+            const fail = b.addFail("Invalid range string for -Dyear");
+            run_step.dependOn(&fail.step);
+            test_step.dependOn(&fail.step);
+            return;
+        };
+        for (parsed_days) |day| {
+            if (parsed_years >= 2025 and day > 12) break; // 2025 (onward?) only has 12 days
             if (day > 25) break; // sane guard
-            const day_path = b.path(b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day }));
+            const day_path = b.path(b.fmt("src/{d}/day{d:0>2}.zig", .{ parsed_years, day }));
 
             // Create day file if it doesn't exist
-            const day_file_path = b.fmt("src/{s}/day{d:0>2}.zig", .{ year_option, day });
+            const day_file_path = b.fmt("src/{d}/day{d:0>2}.zig", .{ parsed_years, day });
             std.fs.cwd().access(day_file_path, .{}) catch {
                 // File doesn't exist, create it
-                std.fs.cwd().makePath(b.fmt("src/{s}", .{year_option})) catch |err| {
+                std.fs.cwd().makePath(b.fmt("src/{d}", .{parsed_years})) catch |err| {
                     if (err != error.PathAlreadyExists) {
-                        const fail = b.addFail(b.fmt("Failed to create directory src/{s}", .{year_option}));
+                        const fail = b.addFail(b.fmt("Failed to create directory src/{d}", .{parsed_years}));
                         run_step.dependOn(&fail.step);
                         test_step.dependOn(&fail.step);
                         return;

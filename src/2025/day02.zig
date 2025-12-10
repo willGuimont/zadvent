@@ -3,9 +3,29 @@ const splitOnce = @import("lib").str_utils.splitOnce;
 
 var buf: [2048]u8 = undefined;
 
+fn u64ToAscii(num_buf: *[32]u8, value: u64) []const u8 {
+    var v = value;
+    var i: usize = num_buf.len;
+
+    if (v == 0) {
+        i -= 1;
+        num_buf.*[i] = '0';
+    } else {
+        while (v != 0) {
+            i -= 1;
+            const digit: u8 = @as(u8, @intCast(v % 10));
+            num_buf.*[i] = '0' + digit;
+            v /= 10;
+        }
+    }
+
+    return num_buf.*[i..];
+}
+
 pub fn part1(input: []const u8) ![]const u8 {
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
     var invalid_sum: u64 = 0;
+    var num_buf: [32]u8 = undefined;
     while (it.next()) |s| {
         if (s.len == 0) continue;
 
@@ -15,10 +35,10 @@ pub fn part1(input: []const u8) ![]const u8 {
 
         var id: u64 = start;
         while (id <= end) : (id += 1) {
-            const asText = std.fmt.bufPrint(&buf, "{d}", .{id}) catch return error.InvalidInput;
+            const asText = u64ToAscii(&num_buf, id);
             if (@mod(asText.len, 2) == 0) {
                 const half = @divTrunc(asText.len, 2);
-                if (std.mem.eql(u8, buf[0..half], buf[half..asText.len])) {
+                if (std.mem.eql(u8, asText[0..half], asText[half..asText.len])) {
                     invalid_sum += id;
                 }
             }
@@ -55,6 +75,7 @@ pub fn isRepeatedPattern(s: []const u8) bool {
 pub fn part2(input: []const u8) ![]const u8 {
     var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
     var invalid_sum: u64 = 0;
+    var num_buf: [32]u8 = undefined;
     while (it.next()) |s| {
         if (s.len == 0) continue;
 
@@ -64,7 +85,7 @@ pub fn part2(input: []const u8) ![]const u8 {
 
         var id: u64 = start;
         while (id <= end) : (id += 1) {
-            const asText = std.fmt.bufPrint(&buf, "{d}", .{id}) catch return error.InvalidInput;
+            const asText = u64ToAscii(&num_buf, id);
             if (isRepeatedPattern(asText)) {
                 invalid_sum += id;
             }

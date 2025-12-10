@@ -1,7 +1,7 @@
 const std = @import("std");
 const lib = @import("lib");
 const min_heap = lib.min_heap;
-const kruskal = lib.kruskal;
+const prim = lib.prim;
 
 var buf: [2048]u8 = undefined;
 
@@ -17,7 +17,7 @@ pub fn pointDistance(p1: Point, p2: Point) f32 {
     const dy = @as(f32, @floatFromInt(p1.y - p2.y));
     const dz = @as(f32, @floatFromInt(p1.z - p2.z));
 
-    return std.math.sqrt(dx * dx + dy * dy + dz * dz);
+    return dx * dx + dy * dy + dz * dz;
 }
 
 const Connection = struct {
@@ -145,22 +145,17 @@ pub fn part2(input: []const u8) ![]const u8 {
             }
         }
     }
-    const allocator = std.heap.page_allocator;
 
-    var mst_edges = try kruskal.kruskal(
-        Point,
-        allocator,
-        points[0..numPoints],
-        pointDistance,
-    );
+    const allocator = std.heap.page_allocator;
+    var mst_edges = try prim.prim_complete(Point, size, allocator, points[0..numPoints], pointDistance);
     defer mst_edges.deinit(allocator);
 
-    if (mst_edges.items.len > 0) {
-        const last_edge = mst_edges.items[mst_edges.items.len - 1];
-        const p1 = points[last_edge.u];
-        const p2 = points[last_edge.v];
-        return std.fmt.bufPrint(&buf, "{d}", .{p1.x * p2.x}) catch "error";
+    if (mst_edges.items.len == 0) {
+        return std.fmt.bufPrint(&buf, "{d}", .{0}) catch "error";
     }
 
-    return std.fmt.bufPrint(&buf, "{d}", .{0}) catch "error";
+    const last_edge = mst_edges.items[mst_edges.items.len - 1];
+    const p1 = points[last_edge.u];
+    const p2 = points[last_edge.v];
+    return std.fmt.bufPrint(&buf, "{d}", .{p1.x * p2.x}) catch "error";
 }

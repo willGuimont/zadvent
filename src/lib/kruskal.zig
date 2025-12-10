@@ -1,11 +1,8 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
+const graph = @import("graph.zig");
 
-pub const Edge = struct {
-    u: usize,
-    v: usize,
-    weight: f32,
-};
+pub const Edge = graph.Edge;
 
 pub const DSU = struct {
     const This = @This();

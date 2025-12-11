@@ -1,7 +1,7 @@
 const std = @import("std");
 const lib = @import("lib");
-const min_heap = lib.min_heap;
-const prim = lib.prim;
+const min_heap = lib.ds.min_heap;
+const prim = lib.graph.prim;
 
 var buf: [2048]u8 = undefined;
 

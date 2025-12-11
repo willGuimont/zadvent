@@ -1,5 +1,5 @@
 const std = @import("std");
-const multimdim_array = @import("multidim_array.zig");
+const multimdim_array = @import("../ds/multidim_array.zig");
 
 /// All-pairs shortest paths using the Floyd–Warshall algorithm.
 ///

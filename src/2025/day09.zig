@@ -1,8 +1,8 @@
 const std = @import("std");
 const lib = @import("lib");
 const splitOnce = lib.str_utils.splitOnce;
-const geometry = lib.geometry;
-const multidim = lib.multidim_array;
+const geometry = lib.math.geometry;
+const multidim = lib.ds.multidim_array;
 
 var buf: [2048]u8 = undefined;
 const size: usize = 497;

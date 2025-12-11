@@ -382,7 +382,7 @@ fn solveLine(line: []const u8, allocator: std.mem.Allocator) !usize {
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.smp_allocator;
 
     var lines = try std.ArrayList([]const u8).initCapacity(allocator, max_num_machines);
     defer lines.deinit(allocator);

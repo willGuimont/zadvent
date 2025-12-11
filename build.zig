@@ -203,7 +203,7 @@ fn emitPart(comptime part: usize, tmp: []u8, d: usize) []const u8 {
 }
 
 fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color: bool, part_opt: []const u8, input_opt: []const u8) []const u8 {
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.smp_allocator;
     const cap: usize = 65536;
     var buf = allocator.alloc(u8, cap) catch unreachable;
     var pos: usize = 0;
@@ -302,7 +302,7 @@ fn buildRunnerSource(year: []const u8, days: []usize, use_timer: bool, use_color
             }
         }
 
-        const read_inputs = std.fmt.bufPrint(&tmp, "    const example_{d} = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, example_path_{d}, 8192);\n    defer std.heap.page_allocator.free(example_{d});\n    const real_{d} = try std.fs.cwd().readFileAlloc(std.heap.page_allocator, real_path_{d}, 65536);\n    defer std.heap.page_allocator.free(real_{d});\n", .{ d, d, d, d, d, d }) catch unreachable;
+        const read_inputs = std.fmt.bufPrint(&tmp, "    const example_{d} = try std.fs.cwd().readFileAlloc(std.heap.smp_allocator, example_path_{d}, 8192);\n    defer std.heap.smp_allocator.free(example_{d});\n    const real_{d} = try std.fs.cwd().readFileAlloc(std.heap.smp_allocator, real_path_{d}, 65536);\n    defer std.heap.smp_allocator.free(real_{d});\n", .{ d, d, d, d, d, d }) catch unreachable;
         {
             const s = read_inputs;
             var i: usize = 0;

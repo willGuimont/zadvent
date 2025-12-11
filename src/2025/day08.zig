@@ -48,7 +48,7 @@ pub fn part1(input: []const u8) ![]const u8 {
             }
         }
     }
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.smp_allocator;
 
     const ConnMinHeap = min_heap.MinHeap(Connection, connectionComparator);
     var heap = ConnMinHeap.init(allocator, {});
@@ -146,7 +146,7 @@ pub fn part2(input: []const u8) ![]const u8 {
         }
     }
 
-    const allocator = std.heap.page_allocator;
+    const allocator = std.heap.smp_allocator;
     var mst_edges = try prim.prim_complete(Point, size, allocator, points[0..numPoints], pointDistance);
     defer mst_edges.deinit(allocator);
 

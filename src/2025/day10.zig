@@ -18,6 +18,13 @@ const StateKey = struct {
     joltage: [max_num_lights]u16,
 };
 
+const WorkerCtx = struct {
+    allocator: std.mem.Allocator,
+    lines: []const []const u8,
+    result: []usize,
+    next_index: *usize,
+};
+
 fn minPresses(target_mask: usize, buttons: []const usize, num_lights: usize) !usize {
     if (target_mask == 0) return 0;
 
@@ -321,59 +328,103 @@ pub fn part1(input: []const u8) ![]const u8 {
     return std.fmt.bufPrint(&buf, "{d}", .{result}) catch "error";
 }
 
-pub fn part2(input: []const u8) ![]const u8 {
-    var result: usize = 0;
+fn solveLine(line: []const u8, allocator: std.mem.Allocator) !usize {
+    var target_joltage: [max_num_lights]usize = [_]usize{0} ** max_num_lights;
+    var num_lights: usize = 0;
+    var num_buttons: usize = 0;
+    var buttons: [max_num_buttons]usize = undefined;
 
-    var line_index: usize = 0;
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
-    while (it.next()) |line| : (line_index += 1) {
-        var target_joltage: [max_num_lights]usize = [_]usize{0} ** max_num_lights;
-        var num_lights: usize = 0;
-        var num_buttons: usize = 0;
-        var buttons: [max_num_buttons]usize = undefined;
-
-        var parts = std.mem.splitAny(u8, line, " ");
-        while (parts.next()) |part| {
-            if (part[0] == '(') {
-                var b_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
-                var b_value: usize = 0;
-                while (b_it.next()) |button| {
-                    const bit_index = try std.fmt.parseInt(u4, button, 10);
-                    const shift = @as(ShiftType, @intCast(bit_index));
-                    b_value |= @as(usize, 1) << shift;
-                }
-                buttons[num_buttons] = b_value;
-                num_buttons += 1;
+    var parts = std.mem.splitAny(u8, line, " ");
+    while (parts.next()) |part| {
+        if (part[0] == '(') {
+            var b_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
+            var b_value: usize = 0;
+            while (b_it.next()) |button| {
+                const bit_index = try std.fmt.parseInt(u4, button, 10);
+                const shift = @as(ShiftType, @intCast(bit_index));
+                b_value |= @as(usize, 1) << shift;
             }
-            if (part[0] == '{') {
-                var t_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
-                var jolt_index: usize = 0;
-                while (t_it.next()) |light| {
-                    const target_jolts = try std.fmt.parseInt(usize, light, 10);
-                    target_joltage[jolt_index] = target_jolts;
-                    jolt_index += 1;
-                }
-                num_lights = jolt_index;
+            buttons[num_buttons] = b_value;
+            num_buttons += 1;
+        }
+        if (part[0] == '{') {
+            var t_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
+            var jolt_index: usize = 0;
+            while (t_it.next()) |light| {
+                const target_jolts = try std.fmt.parseInt(usize, light, 10);
+                target_joltage[jolt_index] = target_jolts;
+                jolt_index += 1;
             }
+            num_lights = jolt_index;
         }
-
-        std.debug.assert(num_lights <= max_num_lights);
-        std.debug.assert(num_buttons <= max_num_buttons);
-
-        var mask: u32 = 0;
-        var bi: usize = 0;
-        while (bi < num_buttons) : (bi += 1) {
-            const bit = @as(u32, 1) << @as(ButtonMaskShift, @intCast(bi));
-            mask |= bit;
-        }
-
-        var cache = std.AutoHashMap(StateKey, usize).init(std.heap.page_allocator);
-        defer cache.deinit();
-
-        const presses = dfsJolts(target_joltage[0..num_lights], mask, buttons[0..num_buttons], num_lights, &cache);
-        if (presses == INF) return ProblemError.Unsolvable;
-        result += presses;
     }
 
-    return std.fmt.bufPrint(&buf, "{d}", .{result}) catch "error";
+    std.debug.assert(num_lights <= max_num_lights);
+    std.debug.assert(num_buttons <= max_num_buttons);
+
+    var mask: u32 = 0;
+    var bi: usize = 0;
+    while (bi < num_buttons) : (bi += 1) {
+        const bit = @as(u32, 1) << @as(ButtonMaskShift, @intCast(bi));
+        mask |= bit;
+    }
+
+    var cache = std.AutoHashMap(StateKey, usize).init(allocator);
+    defer cache.deinit();
+
+    const presses = dfsJolts(target_joltage[0..num_lights], mask, buttons[0..num_buttons], num_lights, &cache);
+    return presses;
+}
+
+fn workerMain(ctx: *WorkerCtx) void {
+    while (true) {
+        const i = @atomicRmw(usize, ctx.next_index, .Add, 1, .seq_cst);
+        if (i >= ctx.lines.len) break;
+
+        const line = ctx.lines[i];
+        const presses = solveLine(line, ctx.allocator) catch unreachable;
+        ctx.result[i] = presses;
+    }
+}
+
+pub fn part2(input: []const u8) ![]const u8 {
+    const allocator = std.heap.page_allocator;
+
+    var lines = try std.ArrayList([]const u8).initCapacity(allocator, max_num_machines);
+    defer lines.deinit(allocator);
+
+    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    while (it.next()) |line| {
+        try lines.append(allocator, line);
+    }
+
+    const line_slice = lines.items;
+
+    var results = try allocator.alloc(usize, line_slice.len);
+    defer allocator.free(results);
+
+    var next_index: usize = 0;
+    var ctx = WorkerCtx{
+        .allocator = allocator,
+        .lines = line_slice,
+        .result = results[0..],
+        .next_index = &next_index,
+    };
+
+    const cpu_count = std.Thread.getCpuCount() catch 1;
+    const worker_count = @min(cpu_count, line_slice.len);
+
+    var threads = try allocator.alloc(std.Thread, worker_count);
+    defer allocator.free(threads);
+
+    for (0..worker_count) |i| {
+        threads[i] = try std.Thread.spawn(.{}, workerMain, .{&ctx});
+    }
+
+    for (threads) |*t| t.join();
+
+    var total: usize = 0;
+    for (results) |r| total += r;
+
+    return std.fmt.bufPrint(&buf, "{d}", .{total}) catch "error";
 }

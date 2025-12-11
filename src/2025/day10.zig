@@ -18,12 +18,17 @@ const StateKey = struct {
     joltage: [max_num_lights]u16,
 };
 
-const WorkerCtx = struct {
+const Ctx = struct {
     allocator: std.mem.Allocator,
     lines: []const []const u8,
-    result: []usize,
-    next_index: *usize,
+    results: []usize,
 };
+
+fn job(ctx: *Ctx, index: usize) void {
+    const line = ctx.lines[index];
+    const presses = solveLine(line, ctx.allocator) catch unreachable;
+    ctx.results[index] = presses;
+}
 
 fn minPresses(target_mask: usize, buttons: []const usize, num_lights: usize) !usize {
     if (target_mask == 0) return 0;
@@ -376,17 +381,6 @@ fn solveLine(line: []const u8, allocator: std.mem.Allocator) !usize {
     return presses;
 }
 
-fn workerMain(ctx: *WorkerCtx) void {
-    while (true) {
-        const i = @atomicRmw(usize, ctx.next_index, .Add, 1, .seq_cst);
-        if (i >= ctx.lines.len) break;
-
-        const line = ctx.lines[i];
-        const presses = solveLine(line, ctx.allocator) catch unreachable;
-        ctx.result[i] = presses;
-    }
-}
-
 pub fn part2(input: []const u8) ![]const u8 {
     const allocator = std.heap.page_allocator;
 
@@ -403,25 +397,17 @@ pub fn part2(input: []const u8) ![]const u8 {
     var results = try allocator.alloc(usize, line_slice.len);
     defer allocator.free(results);
 
-    var next_index: usize = 0;
-    var ctx = WorkerCtx{
+    const ThreadPool = lib.thread_pool.ThreadPool;
+
+    var ctx = Ctx{
         .allocator = allocator,
         .lines = line_slice,
-        .result = results[0..],
-        .next_index = &next_index,
+        .results = results[0..],
     };
 
-    const cpu_count = std.Thread.getCpuCount() catch 1;
-    const worker_count = @min(cpu_count, line_slice.len);
-
-    var threads = try allocator.alloc(std.Thread, worker_count);
-    defer allocator.free(threads);
-
-    for (0..worker_count) |i| {
-        threads[i] = try std.Thread.spawn(.{}, workerMain, .{&ctx});
-    }
-
-    for (threads) |*t| t.join();
+    const Pool = ThreadPool(Ctx, job);
+    var pool = Pool.init(allocator, &ctx, line_slice.len);
+    try pool.run();
 
     var total: usize = 0;
     for (results) |r| total += r;

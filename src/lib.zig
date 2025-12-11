@@ -9,6 +9,7 @@ pub const multidim_array = @import("lib/multidim_array.zig");
 pub const prim = @import("lib/prim.zig");
 pub const queue = @import("lib/queue.zig");
 pub const str_utils = @import("lib/str_utils.zig");
+pub const thread_pool = @import("lib/thread_pool.zig");
 
 test {
     std.testing.refAllDeclsRecursive(@This());

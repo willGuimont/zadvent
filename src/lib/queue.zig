@@ -15,16 +15,16 @@ pub fn Queue(comptime Child: type) type {
         };
 
         /// Allocator used for node allocations.
-        gpa: std.mem.Allocator,
+        allocator: std.mem.Allocator,
         /// Pointer to the first node, or null if empty.
         start: ?*Node,
         /// Pointer to the last node, or null if empty.
         end: ?*Node,
 
         /// Initialize an empty queue that uses `gpa` for allocations.
-        pub fn init(gpa: std.mem.Allocator) Self {
+        pub fn init(allocator: std.mem.Allocator) Self {
             return Self{
-                .gpa = gpa,
+                .allocator = allocator,
                 .start = null,
                 .end = null,
             };
@@ -39,7 +39,7 @@ pub fn Queue(comptime Child: type) type {
         ///
         /// Allocates a new node; returns an error if allocation fails.
         pub fn enqueue(self: *Self, value: Child) !void {
-            const node = try self.gpa.create(Node);
+            const node = try self.allocator.create(Node);
             node.* = .{ .data = value, .next = null };
             if (self.end) |end| end.next = node //
             else self.start = node;
@@ -52,7 +52,7 @@ pub fn Queue(comptime Child: type) type {
         /// freed using the allocator.
         pub fn dequeue(self: *Self) ?Child {
             const start = self.start orelse return null;
-            defer self.gpa.destroy(start);
+            defer self.allocator.destroy(start);
             if (start.next) |next|
                 self.start = next
             else {

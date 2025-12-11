@@ -23,7 +23,7 @@ fn u64ToAscii(num_buf: *[32]u8, value: u64) []const u8 {
 }
 
 pub fn part1(input: []const u8) ![]const u8 {
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], ',');
     var invalid_sum: u64 = 0;
     var num_buf: [32]u8 = undefined;
     while (it.next()) |s| {
@@ -73,7 +73,7 @@ pub fn isRepeatedPattern(s: []const u8) bool {
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], ",");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], ',');
     var invalid_sum: u64 = 0;
     var num_buf: [32]u8 = undefined;
     while (it.next()) |s| {

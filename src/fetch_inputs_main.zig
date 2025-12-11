@@ -2,9 +2,7 @@ const std = @import("std");
 const fetch_input = @import("fetch_input.zig");
 
 pub fn main() !void {
-    var gpa: std.heap.GeneralPurposeAllocator(.{}) = .init;
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+    const allocator = std.heap.smp_allocator;
 
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);

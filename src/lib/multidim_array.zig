@@ -11,6 +11,7 @@ const std = @import("std");
 pub fn MultiDimArray(comptime T: type) type {
     return struct {
         const Self = @This();
+
         data: []T,
         dims: []usize,
         strides: []usize,
@@ -51,6 +52,13 @@ pub fn MultiDimArray(comptime T: type) type {
                 .strides = strides,
                 .allocator = allocator,
             };
+        }
+
+        /// Initialize with default values everywhere.
+        pub fn initDefault(allocator: std.mem.Allocator, dimensions: []const usize, default_value: T) !Self {
+            var arr = try Self.init(allocator, dimensions);
+            arr.fill(default_value);
+            return arr;
         }
 
         /// Free all allocated memory.
@@ -182,4 +190,17 @@ test "MultiDimArray pointer modification" {
     ptr.* = 55;
 
     try std.testing.expectEqual(@as(i32, 55), arr.get(&[_]usize{ 1, 1 }));
+}
+
+test "MultiDimArray initDefault" {
+    const allocator = std.testing.allocator;
+
+    var arr = try MultiDimArray(usize).initDefault(allocator, &[_]usize{ 2, 3 }, 99);
+    defer arr.deinit();
+
+    for (0..2) |i| {
+        for (0..3) |j| {
+            try std.testing.expectEqual(@as(usize, 99), arr.get(&[_]usize{ i, j }));
+        }
+    }
 }

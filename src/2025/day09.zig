@@ -10,7 +10,7 @@ const Point = struct { x: i64, y: i64 };
 
 pub fn part1(input: []const u8) ![]const u8 {
     var points: [size]Point = undefined;
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var num_points: usize = 0;
     while (it.next()) |line| {
         const pair = splitOnce(line, ',');
@@ -33,7 +33,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 
 pub fn part2(input: []const u8) ![]const u8 {
     var points: [size]Point = undefined;
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var num_points: usize = 0;
     while (it.next()) |line| {
         const pair = splitOnce(line, ',');

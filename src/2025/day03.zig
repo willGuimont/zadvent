@@ -21,7 +21,7 @@ pub fn findBestJolts(cells: []const i64, comptime n: i64) !i64 {
 }
 
 pub fn solve(input: []const u8, comptime n: usize) ![]const u8 {
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var total_jolts: i64 = 0;
     var digits: [100]i64 = undefined;
     while (it.next()) |s| {

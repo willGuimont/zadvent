@@ -5,7 +5,7 @@ const size = 136;
 
 pub fn part1(input: []const u8) ![]const u8 {
     var world: [size][size]i32 = [_][size]i32{[_]i32{0} ** size} ** size;
-    var itrow = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var itrow = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var irow: usize = 0;
     while (itrow.next()) |row| {
         for (row, 0..) |c, icol| {
@@ -38,7 +38,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 
 pub fn part2(input: []const u8) ![]const u8 {
     var world: [size][size]i32 = [_][size]i32{[_]i32{0} ** size} ** size;
-    var itrow = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var itrow = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var irow: usize = 0;
     while (itrow.next()) |row| {
         for (row, 0..) |c, icol| {

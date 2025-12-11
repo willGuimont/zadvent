@@ -15,10 +15,10 @@ pub fn part1(input: []const u8) ![]const u8 {
     var opidx: usize = 0;
     var numLines: usize = 0;
 
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |line| {
         if (!std.mem.containsAtLeastScalar(u8, line, 1, '*')) {
-            var numit = std.mem.splitAny(u8, line, " ");
+            var numit = std.mem.splitScalar(u8, line, ' ');
             var numidx: usize = 0;
             while (numit.next()) |numStr| {
                 if (numStr.len == 0) continue;
@@ -27,7 +27,7 @@ pub fn part1(input: []const u8) ![]const u8 {
             }
             numLines += 1;
         } else {
-            var opit = std.mem.splitAny(u8, line, " ");
+            var opit = std.mem.splitScalar(u8, line, ' ');
             while (opit.next()) |opStr| {
                 if (opStr.len == 0) continue;
                 const op = switch (opStr[0]) {
@@ -67,7 +67,7 @@ pub fn part2(input: []const u8) ![]const u8 {
     var buffer: [max_num_lines][width]u8 = undefined;
     var num_lines: usize = 0;
     var max_width: usize = 0;
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |line| {
         for (0..line.len) |i| {
             buffer[num_lines][i] = line[i];
@@ -95,7 +95,7 @@ pub fn part2(input: []const u8) ![]const u8 {
                 }
             }
         }
-        
+
         switch (op_line[col_start]) {
             '*' => {
                 var prod: usize = 1;

@@ -12,7 +12,7 @@ const Range = struct {
 
 pub fn part1(input: []const u8) ![]const u8 {
     var ranges: [size]Range = undefined;
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var range_count: usize = 0;
     while (it.next()) |part| {
         if (part.len == 0) break;
@@ -77,7 +77,7 @@ pub fn combineRanges(ranges: []Range) void {
 
 pub fn part2(input: []const u8) ![]const u8 {
     var ranges: [size]Range = undefined;
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var range_count: usize = 0;
     while (it.next()) |part| {
         if (part.len == 0) break;

@@ -293,14 +293,14 @@ fn dfsJolts(
 pub fn part1(input: []const u8) ![]const u8 {
     var result: usize = 0;
 
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     while (it.next()) |line| {
         var target: usize = undefined;
         var num_lights: u4 = 0;
         var num_buttons: usize = 0;
         var buttons: [max_num_buttons]usize = undefined;
 
-        var parts = std.mem.splitAny(u8, line, " ");
+        var parts = std.mem.splitScalar(u8, line, ' ');
         while (parts.next()) |part| {
             if (part[0] == '[') {
                 for (part[1 .. part.len - 1]) |c| {
@@ -312,7 +312,7 @@ pub fn part1(input: []const u8) ![]const u8 {
                 }
             }
             if (part[0] == '(') {
-                var b_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
+                var b_it = std.mem.splitScalar(u8, part[1 .. part.len - 1], ',');
                 var b_value: usize = 0;
                 while (b_it.next()) |button| {
                     const bit_index = try std.fmt.parseInt(u4, button, 10);
@@ -339,10 +339,10 @@ fn solveLine(line: []const u8, allocator: std.mem.Allocator) !usize {
     var num_buttons: usize = 0;
     var buttons: [max_num_buttons]usize = undefined;
 
-    var parts = std.mem.splitAny(u8, line, " ");
+    var parts = std.mem.splitScalar(u8, line, ' ');
     while (parts.next()) |part| {
         if (part[0] == '(') {
-            var b_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
+            var b_it = std.mem.splitScalar(u8, part[1 .. part.len - 1], ',');
             var b_value: usize = 0;
             while (b_it.next()) |button| {
                 const bit_index = try std.fmt.parseInt(u4, button, 10);
@@ -353,7 +353,7 @@ fn solveLine(line: []const u8, allocator: std.mem.Allocator) !usize {
             num_buttons += 1;
         }
         if (part[0] == '{') {
-            var t_it = std.mem.splitAny(u8, part[1 .. part.len - 1], ",");
+            var t_it = std.mem.splitScalar(u8, part[1 .. part.len - 1], ',');
             var jolt_index: usize = 0;
             while (t_it.next()) |light| {
                 const target_jolts = try std.fmt.parseInt(usize, light, 10);
@@ -387,7 +387,7 @@ pub fn part2(input: []const u8) ![]const u8 {
     var lines = try std.ArrayList([]const u8).initCapacity(allocator, max_num_machines);
     defer lines.deinit(allocator);
 
-    var it = std.mem.splitAny(u8, input[0 .. input.len - 1], "\n");
+    var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     while (it.next()) |line| {
         try lines.append(allocator, line);
     }

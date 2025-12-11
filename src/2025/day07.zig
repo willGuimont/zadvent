@@ -7,7 +7,7 @@ pub fn part1(input: []const u8) ![]const u8 {
     var world: [size][size]u8 = undefined;
     var actual_size: usize = 0;
 
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     var line_num: usize = 0;
     while (it.next()) |line| {
         actual_size = @max(actual_size, line.len);
@@ -44,7 +44,7 @@ pub fn part2(input: []const u8) ![]const u8 {
     var world: [size][size]u8 = undefined;
     var actual_size: usize = 0;
 
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     var line_num: usize = 0;
     while (it.next()) |line| {
         actual_size = @max(actual_size, line.len);

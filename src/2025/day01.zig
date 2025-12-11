@@ -5,7 +5,7 @@ var buf: [2048]u8 = undefined;
 pub fn part1(input: []const u8) ![]const u8 {
     var dial: i32 = 50;
     var num_zeros: i32 = 0;
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |s| {
         if (s.len == 0) continue;
         const sign: i32 = switch (s[0]) {
@@ -26,7 +26,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 pub fn part2(input: []const u8) ![]const u8 {
     var dial: i32 = 50;
     var num_zeros: i32 = 0;
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |s| {
         if (s.len == 0) continue;
         const sign: i32 = switch (s[0]) {

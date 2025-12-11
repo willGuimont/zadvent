@@ -35,9 +35,9 @@ pub fn part1(input: []const u8) ![]const u8 {
     var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
     var numPoints: usize = 0;
 
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |line| {
-        var parts = std.mem.splitAny(u8, line, ",");
+        var parts = std.mem.splitScalar(u8, line, ',');
         if (parts.next()) |x| {
             if (parts.next()) |y| {
                 if (parts.next()) |z| {
@@ -132,9 +132,9 @@ pub fn part2(input: []const u8) ![]const u8 {
     var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
     var numPoints: usize = 0;
 
-    var it = std.mem.splitAny(u8, input, "\n");
+    var it = std.mem.splitScalar(u8, input, '\n');
     while (it.next()) |line| {
-        var parts = std.mem.splitAny(u8, line, ",");
+        var parts = std.mem.splitScalar(u8, line, ',');
         if (parts.next()) |x| {
             if (parts.next()) |y| {
                 if (parts.next()) |z| {

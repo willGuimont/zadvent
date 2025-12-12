@@ -1,5 +1,10 @@
+/// Generic utilities for compile-time inspection of function types and
+/// a small memoization helper that can cache results of pure functions.
 const std = @import("std");
 
+/// Given a function type `F`, return its result type.
+///
+/// This expects `F` to be a bare function type (not a pointer-to-function).
 fn getReturnTypeOfFn(comptime F: type) type {
     const info = @typeInfo(F);
     if (info != .@"fn") {
@@ -8,6 +13,10 @@ fn getReturnTypeOfFn(comptime F: type) type {
     return info.@"fn".return_type.?;
 }
 
+/// Given a function type `F`, return its parameter metadata slice.
+///
+/// This can be used together with `paramsToTupleType` to build a tuple
+/// type that represents all arguments of `F` in order.
 fn getArgumentTypesOfFn(comptime F: type) []const std.builtin.Type.Fn.Param {
     const info = @typeInfo(F);
     if (info != .@"fn") {
@@ -16,6 +25,9 @@ fn getArgumentTypesOfFn(comptime F: type) []const std.builtin.Type.Fn.Param {
     return info.@"fn".params;
 }
 
+/// Convert a compile-time slice of function parameters into a tuple type.
+///
+/// Each entry in `params` must have a concrete, non-optional `type` field.
 fn paramsToTupleType(comptime params: []const std.builtin.Type.Fn.Param) type {
     var types: [params.len]type = undefined;
 
@@ -26,10 +38,23 @@ fn paramsToTupleType(comptime params: []const std.builtin.Type.Fn.Param) type {
     return std.meta.Tuple(&types);
 }
 
+/// Return whether `T` is a function type according to `@typeInfo`.
 fn isFn(comptime T: type) bool {
     return @typeInfo(T) == .@"fn";
 }
 
+/// Memoize a function `F` by caching its results keyed by its arguments.
+///
+/// - `F` must be a function type; its parameters are inspected at comptime.
+/// - The cache key is a `std.meta.Tuple` of all parameter types of `F`.
+/// - The returned type provides `init`, `deinit`, and `call`:
+///   - `init(allocator)` creates a memoizer instance.
+///   - `deinit()` must be called to free internal allocations.
+///   - `call(args)` takes a tuple of arguments matching `F`'s parameters.
+///
+/// For correctness the function should be *pure* with respect to its
+/// arguments: given the same input tuple it should always return the same
+/// value and must not rely on hidden mutable state.
 pub fn Memoize(comptime F: anytype) type {
     const FType = @TypeOf(F);
     if (!isFn(FType)) {
@@ -45,18 +70,26 @@ pub fn Memoize(comptime F: anytype) type {
     return struct {
         const Self = @This();
 
+        /// Hash map used to store cached results. The key is a tuple of
+        /// all arguments to `F` and the value is the corresponding result.
         cache: std.AutoHashMap(Args, Result),
 
+        /// Initialize a memoizer instance using `allocator`.
         pub fn init(allocator: std.mem.Allocator) Self {
             return .{
                 .cache = std.AutoHashMap(Args, Result).init(allocator),
             };
         }
 
+        /// Free all memory associated with this memoizer.
         pub fn deinit(self: *Self) void {
             self.cache.deinit();
         }
-        
+
+        /// Call the underlying function `F` with the given argument tuple.
+        ///
+        /// If the same `args` tuple has been seen before, the cached
+        /// result is returned instead of calling `F` again.
         pub fn call(self: *Self, args: Args) !Result {
             if (self.cache.get(args)) |value| {
                 return value;
@@ -144,13 +177,13 @@ fn test_memoize_1(x: i32) struct { i32, i32 } {
 
 test "memoize simple case" {
     const allocator = std.testing.allocator;
-    
+
     var memoized_1 = Memoize(test_memoize_1).init(allocator);
     defer memoized_1.deinit();
 
-    const call_1 = memoized_1.call(.{ 1 });
-    const call_2 = memoized_1.call(.{ 1 });
-    const call_3 = memoized_1.call(.{ 2 });
+    const call_1 = memoized_1.call(.{1});
+    const call_2 = memoized_1.call(.{1});
+    const call_3 = memoized_1.call(.{2});
 
     try std.testing.expectEqual(call_1, .{ 1, 1 });
     try std.testing.expectEqual(call_2, .{ 1, 1 });

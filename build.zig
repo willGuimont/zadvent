@@ -122,6 +122,7 @@ pub fn build(b: *std.Build) void {
             return;
         };
         for (parsed_days) |day| {
+            if (day <= 0) break;
             if (parsed_years >= 2025 and day > 12) break; // 2025 (onward?) only has 12 days
             if (day > 25) break; // sane guard
             const day_path = b.path(b.fmt("src/{d}/day{d:0>2}.zig", .{ parsed_years, day }));

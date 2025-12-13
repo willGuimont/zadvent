@@ -52,11 +52,6 @@ zig build -Ddays=1..5 solve
 
 # Run days 1 through 10
 zig build -Ddays=..10 solve
-
-# Run specific days (requires separate builds)
-zig build -Ddays=1 solve
-zig build -Ddays=3 solve
-zig build -Ddays=5 solve
 ```
 
 ### Options
@@ -68,7 +63,7 @@ zig build -Ddays=1 -Dtime=false solve
 # Disable colored output
 zig build -Ddays=1 -Dcolor=false solve
 
-# Specify a different year (default: 2025)
+# Specify a different year (default: 2025, you can change it in `build.zig`)
 zig build -Dyear=2024 -Ddays=1 solve
 
 # Choose input set: example, real, or both (default)
@@ -93,7 +88,8 @@ zig build test-lib
 
 ### Manual Input Fetching
 
-Inputs are fetched automatically when running solutions. To manually fetch inputs:
+Inputs are fetched automatically when running solutions.
+To manually fetch inputs:
 
 ```sh
 zig build -Ddays=1 fetch-inputs
@@ -113,6 +109,7 @@ zadvent/
 │   ├── fetch_input.zig         # Input fetching logic
 │   └── fetch_inputs_main.zig   # Input fetching CLI
 ├── input/
+│   └── .gitkeep
 │   └── 2025/
 │       ├── day01.txt           # Real input (auto-fetched)
 │       ├── day01_example.txt   # Example input (manually added)
@@ -122,7 +119,8 @@ zadvent/
 
 ## Creating Solutions
 
-Day files are automatically created with a template when you first run a day. The template includes:
+Day files are automatically created with a template when you first run a day.
+The template includes:
 
 ```zig
 const std = @import("std");
@@ -130,17 +128,20 @@ const std = @import("std");
 var buf: [2048]u8 = undefined;
 
 pub fn part1(input: []const u8) ![]const u8 {
+    _ = input;
     // Your solution here
     return std.fmt.bufPrint(&buf, "not implemented: {d}", .{0}) catch "error";
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
+    _ = input;
     // Your solution here
     return std.fmt.bufPrint(&buf, "not implemented: {d}", .{0}) catch "error";
 }
 ```
 
-Both `part1` and `part2` functions must return a string (`[]const u8`). Use a static buffer like `buf` to format results:
+Both `part1` and `part2` functions must return a string (`[]const u8`).
+Use a static buffer like `buf` to format results:
 
 ```zig
 return std.fmt.bufPrint(&buf, "{d}", .{result}) catch "error";
@@ -174,6 +175,7 @@ Total time: 48ms
 - Green text: example input results
 - Red text: real input results
 - Timing: execution time in nanoseconds
+- Total time: total execution time in milliseconds
 
 ## Debugging in VS Code (LLDB)
 

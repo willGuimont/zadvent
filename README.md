@@ -108,6 +108,8 @@ zadvent/
 │   │   ├── day01.zig      # Day 1 solution
 │   │   ├── day02.zig      # Day 2 solution
 │   │   └── ...
+│   ├── lib/                    # Your custom library
+│   ├── lib.zig                 # Library main module (add imports to your lib/ here)
 │   ├── fetch_input.zig         # Input fetching logic
 │   └── fetch_inputs_main.zig   # Input fetching CLI
 ├── input/

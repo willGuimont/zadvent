@@ -2,6 +2,8 @@
 
 Advent of Code solutions using the Zig programming language.
 
+See [willGuimont/zig-advent-of-code-template](https://github.com/willGuimont/zig-advent-of-code-template) for a template project without my solutions.
+
 ## Setup
 
 Set environment variables for automatic input fetching:

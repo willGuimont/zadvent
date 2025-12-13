@@ -96,6 +96,8 @@ zig build -Ddays=1 fetch-inputs
 zig build -Ddays=1..5 fetch-inputs
 ```
 
+It should be noted that **`dayXX_example.txt`** should be manually added to the `input/2025` directory, as the example input cannot automatically be fetched.
+
 ## Project Structure
 
 ```

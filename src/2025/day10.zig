@@ -74,7 +74,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 
     var it = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     while (it.next()) |line| {
-        var target: usize = undefined;
+        var target: usize = 0;
         var num_lights: u4 = 0;
         var num_buttons: usize = 0;
         var buttons: [max_num_buttons]usize = undefined;

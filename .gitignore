@@ -6,4 +6,4 @@ zig-out/
 /build-*/
 /docgen_tmp/
 .DS_Store
-/input/
+input/**/day[0-9][0-9].txt

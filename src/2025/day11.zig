@@ -12,21 +12,14 @@ const MemoMap = std.StringHashMap(usize);
 const MemoMapForEnd = std.StringHashMap(MemoMap);
 const VisitedSet = std.StaticBitSet(max_nodes);
 
-var global_memo: ?MemoMapForEnd = null;
-
-fn getMemoForEnd(allocator: std.mem.Allocator, end_name: []const u8) !*MemoMap {
-    if (global_memo == null) {
-        global_memo = MemoMapForEnd.init(allocator);
-    }
-
-    const em = &global_memo.?;
-    if (em.getPtr(end_name)) |mm| {
+fn getMemoForEnd(memo_for_end: *MemoMapForEnd, allocator: std.mem.Allocator, end_name: []const u8) !*MemoMap {
+    if (memo_for_end.getPtr(end_name)) |mm| {
         return mm;
     }
 
     const new_mm = MemoMap.init(allocator);
-    try em.put(end_name, new_mm);
-    return em.getPtr(end_name).?;
+    try memo_for_end.put(end_name, new_mm);
+    return memo_for_end.getPtr(end_name).?;
 }
 
 const NodeList = std.StringHashMap(void);
@@ -61,7 +54,7 @@ fn dfsPaths(
             continue;
         }
 
-        const connection = graph.get(conn_name).?;
+        const connection = graph.get(conn_name) orelse continue;
         if (vis.isSet(connection.id)) continue;
 
         vis.set(connection.id);
@@ -74,23 +67,24 @@ fn dfsPaths(
     return total;
 }
 
-fn findAllPaths(allocator: std.mem.Allocator, graph: std.StringHashMap(Node), start: []const u8, end: []const u8) !usize {
-    const starting_node = graph.get(start).?;
+fn findAllPaths(allocator: std.mem.Allocator, memo_for_end: *MemoMapForEnd, graph: std.StringHashMap(Node), start: []const u8, end: []const u8) !usize {
+    const starting_node = graph.get(start) orelse return error.NodeNotFound;
 
     var visited = VisitedSet.initEmpty();
     visited.set(starting_node.id);
 
-    const memo = try getMemoForEnd(allocator, end);
+    const memo = try getMemoForEnd(memo_for_end, allocator, end);
     return try dfsPaths(&graph, starting_node.name, end, &visited, memo);
 }
 
 fn findAllPathsDacFft(allocator: std.mem.Allocator, graph: std.StringHashMap(Node)) !usize {
-    const svr2dac = try findAllPaths(allocator, graph, "svr", "dac");
-    const svr2fft = try findAllPaths(allocator, graph, "svr", "fft");
-    const fft2dac = try findAllPaths(allocator, graph, "fft", "dac");
-    const dac2fft = try findAllPaths(allocator, graph, "dac", "fft");
-    const dac2out = try findAllPaths(allocator, graph, "dac", "out");
-    const fft2out = try findAllPaths(allocator, graph, "fft", "out");
+    var memo_for_end = MemoMapForEnd.init(allocator);
+    const svr2dac = try findAllPaths(allocator, &memo_for_end, graph, "svr", "dac");
+    const svr2fft = try findAllPaths(allocator, &memo_for_end, graph, "svr", "fft");
+    const fft2dac = try findAllPaths(allocator, &memo_for_end, graph, "fft", "dac");
+    const dac2fft = try findAllPaths(allocator, &memo_for_end, graph, "dac", "fft");
+    const dac2out = try findAllPaths(allocator, &memo_for_end, graph, "dac", "out");
+    const fft2out = try findAllPaths(allocator, &memo_for_end, graph, "fft", "out");
 
     return svr2dac * dac2fft * fft2out + svr2fft * fft2dac * dac2out;
 }
@@ -157,7 +151,8 @@ pub fn part1(input: []const u8) ![]const u8 {
         }
     }
 
-    const paths = try findAllPaths(allocator, node_map, "you", "out");
+    var memo_for_end = MemoMapForEnd.init(allocator);
+    const paths = try findAllPaths(allocator, &memo_for_end, node_map, "you", "out");
 
     return std.fmt.bufPrint(&buf, "{d}", .{paths}) catch "error";
 }

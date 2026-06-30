@@ -8,5 +8,5 @@ pub const str_utils = @import("lib/str_utils.zig");
 pub const thread_pool = @import("lib/thread_pool.zig");
 
 test {
-    std.testing.refAllDeclsRecursive(@This());
+    std.testing.refAllDecls(@This());
 }

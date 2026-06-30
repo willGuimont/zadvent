@@ -14,7 +14,7 @@ pub fn MinHeapWithContext(comptime T: type, comptime Context: type, comptime les
         /// Initialize an empty heap with the provided allocator and comparator context.
         pub fn init(allocator: Allocator, context_arg: Context) Self {
             return Self{
-                .items = .{},
+                .items = .empty,
                 .allocator = allocator,
                 .context = context_arg,
             };

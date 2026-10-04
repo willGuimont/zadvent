@@ -113,7 +113,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 }
 
 fn solveLine(line: []const u8) !usize {
-    var target_joltage: [max_num_lights]usize = [_]usize{0} ** max_num_lights;
+    var target_joltage: [max_num_lights]usize = @splat(0);
     var num_lights: usize = 0;
     var num_buttons: usize = 0;
     var buttons: [max_num_buttons]usize = undefined;
@@ -193,7 +193,7 @@ fn solveLine(line: []const u8) !usize {
     var is_pivot_col: [max_num_buttons]bool = undefined;
     for (0..cols) |ci| is_pivot_col[ci] = false;
 
-    var pivot_col_for_row: [max_num_lights]?usize = [_]?usize{null} ** max_num_lights;
+    var pivot_col_for_row: [max_num_lights]?usize = @splat(null);
     i = 0;
     while (i < rows) : (i += 1) {
         var c: usize = 0;

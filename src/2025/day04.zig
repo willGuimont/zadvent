@@ -4,7 +4,7 @@ var buf: [2048]u8 = undefined;
 const size = 136;
 
 pub fn part1(input: []const u8) ![]const u8 {
-    var world: [size][size]i32 = [_][size]i32{[_]i32{0} ** size} ** size;
+    var world: [size][size]i32 = @splat(@splat(0));
     var itrow = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var irow: usize = 0;
     while (itrow.next()) |row| {
@@ -37,7 +37,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
-    var world: [size][size]i32 = [_][size]i32{[_]i32{0} ** size} ** size;
+    var world: [size][size]i32 = @splat(@splat(0));
     var itrow = std.mem.splitScalar(u8, input[0 .. input.len - 1], '\n');
     var irow: usize = 0;
     while (itrow.next()) |row| {

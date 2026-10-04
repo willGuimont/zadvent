@@ -13,29 +13,29 @@ fn getReturnTypeOfFn(comptime F: type) type {
     return info.@"fn".return_type.?;
 }
 
-/// Given a function type `F`, return its parameter metadata slice.
+/// Given a function type `F`, return its parameter type slice.
 ///
 /// This can be used together with `paramsToTupleType` to build a tuple
 /// type that represents all arguments of `F` in order.
-fn getArgumentTypesOfFn(comptime F: type) []const std.builtin.Type.Fn.Param {
+fn getArgumentTypesOfFn(comptime F: type) []const ?type {
     const info = @typeInfo(F);
     if (info != .@"fn") {
         @compileError("Expected a function type");
     }
-    return info.@"fn".params;
+    return info.@"fn".param_types;
 }
 
-/// Convert a compile-time slice of function parameters into a tuple type.
+/// Convert a compile-time slice of function parameter types into a tuple type.
 ///
-/// Each entry in `params` must have a concrete, non-optional `type` field.
-fn paramsToTupleType(comptime params: []const std.builtin.Type.Fn.Param) type {
+/// Each entry in `params` must be concrete (not `anytype` or generic).
+fn paramsToTupleType(comptime params: []const ?type) type {
     var types: [params.len]type = undefined;
 
     inline for (params, &types) |param, *slot| {
-        slot.* = param.type orelse @compileError("Parameter must have a concrete type");
+        slot.* = param orelse @compileError("Parameter must have a concrete type");
     }
 
-    return std.meta.Tuple(&types);
+    return @Tuple(&types);
 }
 
 /// Return whether `T` is a function type according to `@typeInfo`.
@@ -62,7 +62,7 @@ pub fn Memoize(comptime F: anytype) type {
     }
 
     const info = @typeInfo(FType).@"fn";
-    const Params = info.params;
+    const Params = info.param_types;
 
     const Args = paramsToTupleType(Params);
     const Result = info.return_type orelse @compileError("Function must have a return type");
@@ -146,24 +146,24 @@ test "paramsToTupleType for simple functions" {
         const info1 = @typeInfo(Tuple1);
         std.debug.assert(info1 == .@"struct");
         std.debug.assert(info1.@"struct".is_tuple);
-        std.debug.assert(info1.@"struct".fields.len == 0);
+        std.debug.assert(info1.@"struct".field_types.len == 0);
 
         const p2 = getArgumentTypesOfFn(@TypeOf(test_fn_2));
         const Tuple2 = paramsToTupleType(p2);
         const info2 = @typeInfo(Tuple2);
         std.debug.assert(info2 == .@"struct");
         std.debug.assert(info2.@"struct".is_tuple);
-        std.debug.assert(info2.@"struct".fields.len == 1);
-        std.debug.assert(info2.@"struct".fields[0].type == u8);
+        std.debug.assert(info2.@"struct".field_types.len == 1);
+        std.debug.assert(info2.@"struct".field_types[0] == u8);
 
         const p3 = getArgumentTypesOfFn(@TypeOf(test_fn_3));
         const Tuple3 = paramsToTupleType(p3);
         const info3 = @typeInfo(Tuple3);
         std.debug.assert(info3 == .@"struct");
         std.debug.assert(info3.@"struct".is_tuple);
-        std.debug.assert(info3.@"struct".fields.len == 2);
-        std.debug.assert(info3.@"struct".fields[0].type == u8);
-        std.debug.assert(info3.@"struct".fields[1].type == u8);
+        std.debug.assert(info3.@"struct".field_types.len == 2);
+        std.debug.assert(info3.@"struct".field_types[0] == u8);
+        std.debug.assert(info3.@"struct".field_types[1] == u8);
     }
 }
 

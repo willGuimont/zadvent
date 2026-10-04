@@ -27,9 +27,9 @@ pub fn prim_complete(
         return error.TooManyVertices;
     }
 
-    var in_mst = [_]bool{false} ** max_vertices;
-    var min_dist = [_]f32{std.math.inf(f32)} ** max_vertices;
-    var parent = [_]usize{0} ** max_vertices;
+    var in_mst: [max_vertices]bool = @splat(false);
+    var min_dist: [max_vertices]f32 = @splat(std.math.inf(f32));
+    var parent: [max_vertices]usize = @splat(0);
 
     min_dist[0] = 0;
     parent[0] = 0;

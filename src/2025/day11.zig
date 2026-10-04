@@ -70,7 +70,7 @@ fn dfsPaths(
 fn findAllPaths(allocator: std.mem.Allocator, memo_for_end: *MemoMapForEnd, graph: std.StringHashMap(Node), start: []const u8, end: []const u8) !usize {
     const starting_node = graph.get(start) orelse return error.NodeNotFound;
 
-    var visited = VisitedSet.initEmpty();
+    var visited = VisitedSet.empty;
     visited.set(starting_node.id);
 
     const memo = try getMemoForEnd(memo_for_end, allocator, end);

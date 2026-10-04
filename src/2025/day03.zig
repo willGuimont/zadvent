@@ -8,7 +8,7 @@ pub fn combine(x: i64, y: i64) !i64 {
 }
 
 pub fn findBestJolts(cells: []const i64, comptime n: i64) !i64 {
-    var state: [n + 1][101]i64 = [_][101]i64{[_]i64{0} ** 101} ** (n + 1);
+    var state: [n + 1][101]i64 = @splat(@splat(0));
     for (1..n + 1) |chosen| {
         for (1..cells.len + 1) |upTo| {
             if (chosen > upTo) continue;

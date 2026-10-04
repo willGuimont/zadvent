@@ -16,13 +16,13 @@ pub fn part1(input: []const u8) ![]const u8 {
     }
 
     const starting_point = std.mem.indexOf(u8, &world[0], "S").?;
-    var current_line = [_]u8{'.'} ** size;
+    var current_line: [size]u8 = @splat('.');
     current_line[starting_point] = '|';
 
     var num_splits: usize = 0;
     for (1..actual_size) |lineIdx| {
         const world_line = world[lineIdx];
-        var next_line = [_]u8{'.'} ** size;
+        var next_line: [size]u8 = @splat('.');
         for (0..actual_size) |i| {
             if (current_line[i] == '|') {
                 if (world_line[i] == '^') {
@@ -53,12 +53,12 @@ pub fn part2(input: []const u8) ![]const u8 {
     }
 
     const starting_point = std.mem.indexOf(u8, &world[0], "S").?;
-    var current_line = [_]i64{0} ** size;
+    var current_line: [size]i64 = @splat(0);
     current_line[starting_point] = 1;
 
     for (1..actual_size) |lineIdx| {
         const world_line = world[lineIdx];
-        var next_line = [_]i64{0} ** size;
+        var next_line: [size]i64 = @splat(0);
         for (0..actual_size) |i| {
             const num_beams = current_line[i];
             if (num_beams > 0) {

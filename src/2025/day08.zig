@@ -32,7 +32,7 @@ fn connectionComparator(context: void, a: Connection, b: Connection) bool {
 }
 
 pub fn part1(input: []const u8) ![]const u8 {
-    var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
+    var points: [size]Point = @splat(.{ .x = 0, .y = 0, .z = 0 });
     var numPoints: usize = 0;
 
     var it = std.mem.splitScalar(u8, input, '\n');
@@ -66,7 +66,7 @@ pub fn part1(input: []const u8) ![]const u8 {
         maxConnections = 1000;
     }
 
-    var circuit = [_]usize{0} ** size;
+    var circuit: [size]usize = @splat(0);
     var numCircuits: usize = 0;
     for (0..maxConnections) |_| {
         const conn = heap.pop().?;
@@ -129,7 +129,7 @@ pub fn part1(input: []const u8) ![]const u8 {
 }
 
 pub fn part2(input: []const u8) ![]const u8 {
-    var points = [_]Point{.{ .x = 0, .y = 0, .z = 0 }} ** size;
+    var points: [size]Point = @splat(.{ .x = 0, .y = 0, .z = 0 });
     var numPoints: usize = 0;
 
     var it = std.mem.splitScalar(u8, input, '\n');

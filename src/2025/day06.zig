@@ -84,7 +84,7 @@ pub fn part2(input: []const u8) ![]const u8 {
             col_width = max_width - col_start;
         }
         const col_end = col_start + col_width.?;
-        var table: [4][max_num_lines]u8 = [_][max_num_lines]u8{[_]u8{' '} ** max_num_lines} ** 4;
+        var table: [4][max_num_lines]u8 = @splat(@splat(' '));
         for (0..num_lines - 2) |i| {
             const s: []u8 = buffer[i][col_start..col_end];
             for (0..4) |j| {
